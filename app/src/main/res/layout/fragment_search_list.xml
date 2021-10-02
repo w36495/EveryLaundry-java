@@ -6,7 +6,7 @@
     android:layout_height="match_parent">
 
     <EditText
-        android:id="@+id/main_search"
+        android:id="@+id/search_laundry"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="세탁소를 검색하세요."
@@ -14,10 +14,10 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/tv_main_text"/>
+        app:layout_constraintBottom_toTopOf="@id/search_title"/>
 
     <TextView
-        android:id="@+id/tv_main_text"
+        android:id="@+id/search_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="최근 검색한 세탁소"
@@ -25,17 +25,17 @@
         android:textSize="20sp"
         android:layout_marginVertical="10dp"
         android:paddingHorizontal="10dp"
-        app:layout_constraintTop_toBottomOf="@id/main_search"
+        app:layout_constraintTop_toBottomOf="@id/search_laundry"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/main_recyclerView"/>
+        app:layout_constraintBottom_toTopOf="@id/search_recyclerView"/>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/main_recyclerView"
+        android:id="@+id/search_recyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:paddingHorizontal="10dp"
-        app:layout_constraintTop_toBottomOf="@+id/tv_main_text"
+        app:layout_constraintTop_toBottomOf="@+id/search_title"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"/>

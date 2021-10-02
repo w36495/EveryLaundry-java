@@ -20,7 +20,7 @@
         android:id="@+id/setting_img"
         android:layout_width="200dp"
         android:layout_height="200dp"
-        tools:src="@mipmap/ic_launcher"
+        android:src="@mipmap/ic_launcher"
         android:layout_marginVertical="10dp"
         app:layout_constraintTop_toBottomOf="@id/setting_title"
         app:layout_constraintLeft_toLeftOf="@id/setting_title"
@@ -35,8 +35,8 @@
         android:textAlignment="textStart"
         android:drawableLeft="@drawable/ic_baseline_settings_24"
         app:layout_constraintTop_toBottomOf="@id/setting_img"
-        app:layout_constraintLeft_toLeftOf="setting_img"
-        app:layout_constraintRight_toRightOf="setting_img"
+        app:layout_constraintLeft_toLeftOf="@id/setting_img"
+        app:layout_constraintRight_toRightOf="@id/setting_img"
         app:layout_constraintBottom_toTopOf="@id/setting_post_list"/>
 
     <Button
@@ -44,8 +44,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="작성 글 목록"
-        app:layout_constraintLeft_toLeftOf="setting_btn_update"
-        app:layout_constraintRight_toRightOf="setting_btn_update"
+        android:textAlignment="textStart"
+        android:drawableLeft="@drawable/baseline_edit_note_24"
+        app:layout_constraintLeft_toLeftOf="@id/setting_btn_update"
+        app:layout_constraintRight_toRightOf="@id/setting_btn_update"
         app:layout_constraintTop_toBottomOf="@id/setting_btn_update"
         app:layout_constraintBottom_toTopOf="@id/setting_review_list"/>
 
@@ -54,9 +56,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="작성 리뷰 목록"
+        android:drawableLeft="@drawable/baseline_thumb_up_24"
+        android:textAlignment="textStart"
         app:layout_constraintTop_toBottomOf="@id/setting_post_list"
-        app:layout_constraintLeft_toLeftOf="setting_post_list"
-        app:layout_constraintRight_toRightOf="setting_post_list"
+        app:layout_constraintLeft_toLeftOf="@id/setting_post_list"
+        app:layout_constraintRight_toRightOf="@id/setting_post_list"
         app:layout_constraintBottom_toTopOf="@id/setting_faq"/>
 
     <Button
@@ -67,8 +71,8 @@
         android:drawableLeft="@drawable/ic_baseline_help_outline_24"
         android:textAlignment="textStart"
         app:layout_constraintTop_toBottomOf="@id/setting_review_list"
-        app:layout_constraintLeft_toLeftOf="setting_review_list"
-        app:layout_constraintRight_toRightOf="setting_review_list"
+        app:layout_constraintLeft_toLeftOf="@id/setting_review_list"
+        app:layout_constraintRight_toRightOf="@id/setting_review_list"
         app:layout_constraintBottom_toTopOf="@id/setting_app_info"/>
 
     <Button
@@ -76,9 +80,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Every Laundry 정보"
+        android:drawableLeft="@drawable/ic_baseline_error_outline_24"
+        android:textAlignment="textStart"
         app:layout_constraintTop_toBottomOf="@id/setting_faq"
-        app:layout_constraintLeft_toLeftOf="setting_faq"
-        app:layout_constraintRight_toRightOf="setting_faq"/>
+        app:layout_constraintLeft_toLeftOf="@id/setting_faq"
+        app:layout_constraintRight_toRightOf="@id/setting_faq"/>
 
 
 
