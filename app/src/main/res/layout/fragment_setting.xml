@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <TextView
+        android:id="@+id/setting_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="설정"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"/>
+
+    <ImageView
+        android:id="@+id/setting_img"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        tools:src="@mipmap/ic_launcher"
+        android:layout_marginVertical="10dp"
+        app:layout_constraintTop_toBottomOf="@id/setting_title"
+        app:layout_constraintLeft_toLeftOf="@id/setting_title"
+        app:layout_constraintRight_toRightOf="@id/setting_title"
+        app:layout_constraintBottom_toTopOf="@id/setting_btn_update"/>
+
+    <Button
+        android:id="@+id/setting_btn_update"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="회원 정보 수정"
+        android:textAlignment="textStart"
+        android:drawableLeft="@drawable/ic_baseline_settings_24"
+        app:layout_constraintTop_toBottomOf="@id/setting_img"
+        app:layout_constraintLeft_toLeftOf="setting_img"
+        app:layout_constraintRight_toRightOf="setting_img"
+        app:layout_constraintBottom_toTopOf="@id/setting_post_list"/>
+
+    <Button
+        android:id="@+id/setting_post_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="작성 글 목록"
+        app:layout_constraintLeft_toLeftOf="setting_btn_update"
+        app:layout_constraintRight_toRightOf="setting_btn_update"
+        app:layout_constraintTop_toBottomOf="@id/setting_btn_update"
+        app:layout_constraintBottom_toTopOf="@id/setting_review_list"/>
+
+    <Button
+        android:id="@+id/setting_review_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="작성 리뷰 목록"
+        app:layout_constraintTop_toBottomOf="@id/setting_post_list"
+        app:layout_constraintLeft_toLeftOf="setting_post_list"
+        app:layout_constraintRight_toRightOf="setting_post_list"
+        app:layout_constraintBottom_toTopOf="@id/setting_faq"/>
+
+    <Button
+        android:id="@+id/setting_faq"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="자주 묻는 질문"
+        android:drawableLeft="@drawable/ic_baseline_help_outline_24"
+        android:textAlignment="textStart"
+        app:layout_constraintTop_toBottomOf="@id/setting_review_list"
+        app:layout_constraintLeft_toLeftOf="setting_review_list"
+        app:layout_constraintRight_toRightOf="setting_review_list"
+        app:layout_constraintBottom_toTopOf="@id/setting_app_info"/>
+
+    <Button
+        android:id="@+id/setting_app_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Every Laundry 정보"
+        app:layout_constraintTop_toBottomOf="@id/setting_faq"
+        app:layout_constraintLeft_toLeftOf="setting_faq"
+        app:layout_constraintRight_toRightOf="setting_faq"/>
+
+
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

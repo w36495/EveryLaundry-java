@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <ImageView
+        android:id="@+id/login_img"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        tools:src="@mipmap/ic_launcher"
+        android:layout_marginTop="100dp"
+        android:layout_marginBottom="50dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/login_id" />
+
+    <EditText
+        android:id="@+id/login_id"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="아이디를 입력하세요."
+        android:layout_marginHorizontal="20dp"
+        app:layout_constraintTop_toBottomOf="@id/login_img"
+        app:layout_constraintLeft_toLeftOf="@id/login_img"
+        app:layout_constraintRight_toRightOf="@id/login_img"
+        app:layout_constraintBottom_toTopOf="@id/login_password"/>
+
+    <EditText
+        android:id="@+id/login_password"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="비밀번호를 입력하세요."
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="10dp"
+        app:layout_constraintTop_toBottomOf="@id/login_id"
+        app:layout_constraintLeft_toLeftOf="@id/login_id"
+        app:layout_constraintRight_toRightOf="@id/login_id" />
+
+    <Button
+        android:id="@+id/login_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="로그인"
+        app:layout_constraintTop_toBottomOf="@id/login_password"
+        app:layout_constraintLeft_toLeftOf="@id/login_password"
+        app:layout_constraintRight_toRightOf="@id/login_password"
+        app:layout_constraintBottom_toTopOf="@id/login_btn_singup"/>
+
+    <Button
+        android:id="@+id/login_btn_singup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="회원가입"
+        app:layout_constraintTop_toBottomOf="@id/login_btn"
+        app:layout_constraintLeft_toLeftOf="@id/login_btn"
+        app:layout_constraintRight_toRightOf="@id/login_btn" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
