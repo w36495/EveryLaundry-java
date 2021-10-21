@@ -1,4 +1,4 @@
-package com.w36495.everylaundry;
+package com.w36495.everylaundry.data;
 
 /**
  * Laundry Data Class

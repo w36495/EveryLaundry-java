@@ -4,21 +4,27 @@
     <item
         android:id="@+id/nav_list"
         android:title="목록"
-        android:icon="@drawable/ic_baseline_home_24" />
+        android:icon="@drawable/ic_baseline_home_24"
+        android:enabled="true"
+        android:iconTint="@color/textColor"/>
 
     <item
         android:id="@+id/nav_like"
         android:title="즐겨찾기"
-        android:icon="@drawable/ic_baseline_favorite_24"/>
+        android:icon="@drawable/ic_baseline_favorite_24"
+        android:enabled="true"
+        android:iconTint="@color/textColor"/>
 
     <item
         android:id="@+id/nav_board"
         android:title="게시판"
-        android:icon="@drawable/ic_baseline_list_alt_24"/>
+        android:icon="@drawable/ic_baseline_list_alt_24"
+        android:enabled="true"/>
 
     <item
         android:id="@+id/nav_setting"
         android:title="설정"
-        android:icon="@drawable/ic_baseline_account_circle_24"/>
+        android:icon="@drawable/ic_baseline_account_circle_24"
+        android:enabled="true"/>
 
 </menu>

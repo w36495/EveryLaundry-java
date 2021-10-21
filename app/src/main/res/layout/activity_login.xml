@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/backgroundColor"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
@@ -22,7 +23,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="아이디를 입력하세요."
+        android:textSize="18sp"
+        android:textColor="@color/textColor"
         android:layout_marginHorizontal="20dp"
+        android:background="@drawable/et_rounded_gray"
         app:layout_constraintTop_toBottomOf="@id/login_img"
         app:layout_constraintLeft_toLeftOf="@id/login_img"
         app:layout_constraintRight_toRightOf="@id/login_img"
@@ -33,19 +37,31 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="비밀번호를 입력하세요."
+        android:textSize="18sp"
+        android:inputType="textPassword"
+        android:textColor="@color/textColor"
+        android:background="@drawable/et_rounded_gray"
         android:layout_marginHorizontal="20dp"
         android:layout_marginTop="10dp"
         app:layout_constraintTop_toBottomOf="@id/login_id"
         app:layout_constraintLeft_toLeftOf="@id/login_id"
-        app:layout_constraintRight_toRightOf="@id/login_id" />
+        app:layout_constraintRight_toRightOf="@id/login_id"
+        app:layout_constraintBottom_toTopOf="@id/login_btn"/>
 
     <Button
         android:id="@+id/login_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="로그인"
+        android:textSize="14sp"
+        android:textColor="@color/backgroundColor"
+        android:background="@drawable/btn_rounded_green"
+        android:textStyle="bold"
+        android:textAlignment="center"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="10dp"
         app:layout_constraintTop_toBottomOf="@id/login_password"
-        app:layout_constraintLeft_toLeftOf="@id/login_password"
+        app:layout_constraintLeft_toRightOf="@id/login_btn_singup"
         app:layout_constraintRight_toRightOf="@id/login_password"
         app:layout_constraintBottom_toTopOf="@id/login_btn_singup"/>
 
@@ -54,9 +70,23 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="회원가입"
-        app:layout_constraintTop_toBottomOf="@id/login_btn"
-        app:layout_constraintLeft_toLeftOf="@id/login_btn"
-        app:layout_constraintRight_toRightOf="@id/login_btn" />
+        android:textSize="14sp"
+        android:textColor="@color/backgroundColor"
+        android:background="@drawable/btn_rounded_green"
+        android:textStyle="bold"
+        android:textAlignment="center"
+        android:layout_marginTop="10dp"
+        app:layout_constraintTop_toBottomOf="@id/login_password"
+        app:layout_constraintRight_toLeftOf="@id/login_btn"
+        app:layout_constraintLeft_toRightOf="@id/login_view"/>
+
+    <View
+        android:id="@+id/login_view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/login_password"
+        app:layout_constraintRight_toLeftOf="@id/login_btn_singup"
+        app:layout_constraintLeft_toLeftOf="@id/login_password" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

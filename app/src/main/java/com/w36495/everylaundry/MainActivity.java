@@ -1,22 +1,18 @@
 package com.w36495.everylaundry;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
-import android.os.PersistableBundle;
-import android.util.Log;
 import android.view.MenuItem;
-import android.widget.FrameLayout;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
-
-import java.util.ArrayList;
+import com.w36495.everylaundry.fragment.BoardFragment;
+import com.w36495.everylaundry.fragment.LikeFragment;
+import com.w36495.everylaundry.fragment.SearchFragment;
+import com.w36495.everylaundry.fragment.SettingFragment;
 
 import timber.log.Timber;
 
