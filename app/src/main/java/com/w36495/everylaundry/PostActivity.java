@@ -3,8 +3,10 @@ package com.w36495.everylaundry;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -29,6 +31,7 @@ public class PostActivity extends AppCompatActivity {
     private TextView post_title, post_writer, post_regist_date, post_view_count, post_recommend_count, post_contents;
     private EditText post_comment;
     private Button post_comment_btn;
+    private ImageButton post_add_btn, post_back_btn;
 
     private RequestQueue requestQueue;
 
@@ -59,6 +62,8 @@ public class PostActivity extends AppCompatActivity {
         post_contents = findViewById(R.id.post_contents);
         post_comment = findViewById(R.id.post_comment);
         post_comment_btn = findViewById(R.id.post_comment_btn);
+        post_back_btn = findViewById(R.id.post_back_btn);
+        post_add_btn = findViewById(R.id.post_add_btn);
 
 
         Intent intent = getIntent();
@@ -71,6 +76,14 @@ public class PostActivity extends AppCompatActivity {
 
         getPostContents(postPosition);
 
+        post_add_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent1 = new Intent(PostActivity.this, PostAddActivity.class);
+                startActivity(intent1);
+            }
+        });
+
 
 
     }
@@ -78,7 +91,7 @@ public class PostActivity extends AppCompatActivity {
     private void getPostContents(int postPosition) {
         Log.d(TAG, "PostActivity - getPostContents() 호출");
 
-        String URL = "http://54.180.88.233/selectPost.php";
+        String URL = DatabaseInfo.showPostURL;
 
         StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
             @Override

@@ -6,17 +6,9 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.toolbox.Volley;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 public class SignupActivity extends AppCompatActivity {
 
@@ -51,9 +43,8 @@ public class SignupActivity extends AppCompatActivity {
                 String userEmail = signup_email.getText().toString();
                 String userMobile = signup_mobile.getText().toString();
 
-                InsertData insertUser = new InsertData();
-                insertUser.execute("http://54.180.88.233/insert.php"
-                        , userID, userPW, userNickNM, userEmail, userMobile);
+                InsertUser insertUser = new InsertUser();
+                insertUser.execute(DatabaseInfo.setUserURL, userID, userPW, userNickNM, userEmail, userMobile);
 
                 Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
                 startActivity(intent);

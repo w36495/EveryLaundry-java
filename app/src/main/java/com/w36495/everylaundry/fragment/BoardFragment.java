@@ -12,6 +12,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -22,7 +23,9 @@ import com.android.volley.toolbox.Volley;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.w36495.everylaundry.DatabaseInfo;
 import com.w36495.everylaundry.PostActivity;
+import com.w36495.everylaundry.PostAddActivity;
 import com.w36495.everylaundry.PostClickListener;
 import com.w36495.everylaundry.data.Post;
 import com.w36495.everylaundry.R;
@@ -41,6 +44,9 @@ public class BoardFragment extends Fragment {
     private RecyclerView postRecyclerView;
     private BoardCategoryAdapter categoryAdapter;
     private BoardPostAdapter postAdapter;
+
+    private FloatingActionButton board_add_fab;
+
 
     private RequestQueue requestQueue;
 
@@ -66,6 +72,7 @@ public class BoardFragment extends Fragment {
 
         categoryRecyclerView = view.findViewById(R.id.board_category_recyclerView);
         postRecyclerView = view.findViewById(R.id.board_post_recyclerView);
+        board_add_fab = view.findViewById(R.id.board_add_fab);
 
         // 카테고리 //
         showBoardCategory(view);
@@ -73,6 +80,13 @@ public class BoardFragment extends Fragment {
         // 게시물
         showBoardPost(view);
 
+        board_add_fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(view.getContext(), PostAddActivity.class);
+                startActivity(intent);
+            }
+        });
 
     }
 
@@ -80,7 +94,7 @@ public class BoardFragment extends Fragment {
      * 카테고리
      */
     private void showBoardCategory(View view) {
-        String URL = "http://54.180.88.233/selectCategory.php";
+        String URL = DatabaseInfo.showBoardCategoryURL;
 
         StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
             @Override
@@ -130,7 +144,7 @@ public class BoardFragment extends Fragment {
      */
 
     private void showBoardPost(View view) {
-        String URL = "http://54.180.88.233/selectPost.php";
+        String URL = DatabaseInfo.showBoardPostURL;
 
         StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
             @Override

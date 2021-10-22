@@ -55,7 +55,7 @@ public class LoginActivity extends AppCompatActivity {
                 String userPassword = login_password.getText().toString();
 
 
-                String URL = "http://54.180.88.233/login.php";
+                String URL = DatabaseInfo.loginURL;
 
                 StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
                     @Override
@@ -68,7 +68,7 @@ public class LoginActivity extends AppCompatActivity {
                             @Override
                             public void onErrorResponse(VolleyError error) {
                                 // 에러나면 error로 들어옴
-                                Log.d("로그", "로그인 오류");
+                                Log.d("로그", "로그인 오류 : "+error.getMessage());
                             }
                         });
 
