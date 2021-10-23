@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -21,35 +22,47 @@ import com.android.volley.toolbox.Volley;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.w36495.everylaundry.data.DatabaseInfo;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
+import timber.log.Timber;
 
 /**
  * 게시물 조회
  */
 public class PostActivity extends AppCompatActivity {
-    private static String TAG = "로그";
-
     private TextView post_title, post_writer, post_regist_date, post_view_count, post_recommend_count, post_contents;
     private EditText post_comment;
     private Button post_comment_btn;
-    private ImageButton post_add_btn, post_back_btn;
+    private ImageButton post_update_btn, post_back_btn;
 
     private RequestQueue requestQueue;
+
+    private int postKey = -1;
+    private int categoryKey = -1;
+    private String postWriter = null;
+    private String loginUser = LoginActivity.userID;
+    private boolean userFlag = true;    // 작성자 == 로그인한사람 : true, 작성자 != 로그인한사람 : false;
 
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_board_post);
-        Log.d(TAG, "PostActivity - onCreate() 호출");
+        Timber.d("onCreate() 호출");
 
         if (requestQueue == null) {
             requestQueue = Volley.newRequestQueue(getApplicationContext());
         }
 
+        if (BuildConfig.DEBUG) {
+            Timber.plant(new Timber.DebugTree());
+        }
+
         setInit();
-
-
-
     }
 
     private void setInit() {
@@ -63,47 +76,73 @@ public class PostActivity extends AppCompatActivity {
         post_comment = findViewById(R.id.post_comment);
         post_comment_btn = findViewById(R.id.post_comment_btn);
         post_back_btn = findViewById(R.id.post_back_btn);
-        post_add_btn = findViewById(R.id.post_add_btn);
+        post_update_btn = findViewById(R.id.post_update_btn);
 
 
         Intent intent = getIntent();
-        int postPosition = -1;
-        if (getIntent().hasExtra("postPosition")) {
-            postPosition = intent.getIntExtra("postPosition", -2);
+
+        if (getIntent().hasExtra("postKey")) {
+            postKey = intent.getIntExtra("postKey", -2);
+            categoryKey = intent.getIntExtra("categoryKey", -2);
+            postWriter = intent.getStringExtra("postWriter");
         }
 
-        Log.d(TAG, "PostActivity - postPosition : " + postPosition);
+        Timber.d("선택된 게시물 postKey : " + postKey);
 
-        getPostContents(postPosition);
+        getPostContents(postKey);
 
-        post_add_btn.setOnClickListener(new View.OnClickListener() {
+        // 작성자 != 로그인 한 사람
+        if (!loginUser.equals(postWriter)) {
+            userFlag = false;
+            post_update_btn.setImageResource(R.drawable.ic_baseline_thumb_up_off_alt_24);
+        }
+
+        // 게시물 수정 버튼
+        post_update_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent1 = new Intent(PostActivity.this, PostAddActivity.class);
-                startActivity(intent1);
+
+                if (userFlag) {
+                    String updatePostTitle = post_title.getText().toString();
+                    String updatePostContents = post_contents.getText().toString();
+
+                    Timber.d("postKey : " + postKey);
+                    Timber.d("넘어갈 카테고리 키 : " + categoryKey);
+
+                    Intent updateIntent = new Intent(PostActivity.this, PostAddActivity.class);
+                    updateIntent.putExtra("updateFlag", "N");
+                    updateIntent.putExtra("updatePostKey", postKey);
+                    updateIntent.putExtra("updatePostCategoryKey", categoryKey);
+                    updateIntent.putExtra("updatePostTitle", updatePostTitle);
+                    updateIntent.putExtra("updatePostContents", updatePostContents);
+                    startActivity(updateIntent);
+                }
+
+                else {
+                    // todo: 좋아요(따봉)수 연결하기
+                    Toast.makeText(getApplicationContext(), "준비중입니다.", Toast.LENGTH_SHORT).show();
+                }
+
             }
         });
-
-
-
     }
 
-    private void getPostContents(int postPosition) {
-        Log.d(TAG, "PostActivity - getPostContents() 호출");
+    private void getPostContents(int postKey) {
+        Timber.d("getPostContents() 호출");
 
         String URL = DatabaseInfo.showPostURL;
 
         StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-                Log.d(TAG, "PostActivity - parsePostContents() 성공 : " + response);
-                parsePostContents(response, postPosition);
+                Timber.d("parsePostContents() 성공 : " + response);
+                parsePostContents(response, postKey);
             }
         },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Log.d(TAG, "PostActivity - parsePostContents() 에러 : " + error);
+                        Timber.d("parsePostContents() 에러 : " + error);
                     }
                 });
 
@@ -112,7 +151,7 @@ public class PostActivity extends AppCompatActivity {
 
     }
 
-    private void parsePostContents(String response, int postPosition) {
+    private void parsePostContents(String response, int postKey) {
         JsonParser jsonParser = new JsonParser();
         JsonObject object = (JsonObject) jsonParser.parse(response);
         JsonArray postArray = (JsonArray) object.get("board_post");
@@ -120,7 +159,7 @@ public class PostActivity extends AppCompatActivity {
         JsonObject post = new JsonObject();
         for (int index=0; index<postArray.size(); index++) {
             post = (JsonObject) postArray.get(index);
-            if ((postPosition+1) == post.get("POST_KEY").getAsInt()) {
+            if (postKey == post.get("POST_KEY").getAsInt()) {
                 break;
             }
         }
@@ -137,5 +176,6 @@ public class PostActivity extends AppCompatActivity {
         post_recommend_count.setText(post.get("RECOMMENT_CNT").getAsString());
 
     }
+
 
 }

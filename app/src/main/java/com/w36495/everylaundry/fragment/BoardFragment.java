@@ -23,7 +23,8 @@ import com.android.volley.toolbox.Volley;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.w36495.everylaundry.DatabaseInfo;
+import com.w36495.everylaundry.BuildConfig;
+import com.w36495.everylaundry.data.DatabaseInfo;
 import com.w36495.everylaundry.PostActivity;
 import com.w36495.everylaundry.PostAddActivity;
 import com.w36495.everylaundry.PostClickListener;
@@ -34,7 +35,6 @@ import com.w36495.everylaundry.adapter.BoardPostAdapter;
 
 import java.util.ArrayList;
 
-import retrofit2.http.POST;
 import timber.log.Timber;
 
 public class BoardFragment extends Fragment {
@@ -47,10 +47,10 @@ public class BoardFragment extends Fragment {
 
     private FloatingActionButton board_add_fab;
 
-
     private RequestQueue requestQueue;
 
-    private ArrayList<String> categoryList = new ArrayList<>();
+    private int postKey = 0;
+    public static ArrayList<String> categoryList = new ArrayList<>();
     private ArrayList<Post> postList = new ArrayList<>();
 
     @Nullable
@@ -58,7 +58,9 @@ public class BoardFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_board, container, false);
 
-        Timber.plant(new Timber.DebugTree());
+        if (BuildConfig.DEBUG) {
+            Timber.plant(new Timber.DebugTree());
+        }
 
         if (requestQueue == null) {
             requestQueue = Volley.newRequestQueue(view.getContext());
@@ -74,20 +76,24 @@ public class BoardFragment extends Fragment {
         postRecyclerView = view.findViewById(R.id.board_post_recyclerView);
         board_add_fab = view.findViewById(R.id.board_add_fab);
 
+
+
         // 카테고리 //
         showBoardCategory(view);
 
         // 게시물
         showBoardPost(view);
 
+        // 게시물 작성 버튼
         board_add_fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(view.getContext(), PostAddActivity.class);
+                intent.putExtra("postKey", postKey);
+                //intent.putStringArrayListExtra("categoryList", categoryList);
                 startActivity(intent);
             }
         });
-
     }
 
     /**
@@ -171,31 +177,33 @@ public class BoardFragment extends Fragment {
         JsonObject jsonObject = (JsonObject)jsonParser.parse(response);
         JsonArray jsonPost = (JsonArray)jsonObject.get("board_post");
 
+        postKey = jsonPost.size();
+
         for (int index=0; index<jsonPost.size(); index++) {
-            JsonObject category = (JsonObject)jsonPost.get(index);
+            JsonObject jsonOnePost = (JsonObject)jsonPost.get(index);
 
             boolean postNotice = false;
             boolean postCommentFlag = true;
 
-            if (category.get("POST_NOTICE").getAsCharacter() == 'Y') {
+            if (jsonOnePost.get("POST_NOTICE").getAsCharacter() == 'Y') {
                 postNotice = true;
             }
-            if (category.get("POST_CM_FLAG").getAsCharacter() == 'N') {
+            if (jsonOnePost.get("POST_CM_FLAG").getAsCharacter() == 'N') {
                 postCommentFlag = false;
             }
 
             Post post = new Post(
-                    category.get("POST_KEY").getAsInt(),
-                    category.get("USER_ID").getAsString(),
-                    category.get("CATEGORY_KEY").getAsInt(),
-                    category.get("POST_TITLE").getAsString(),
-                    category.get("POST_CONTENTS").getAsString(),
-                    category.get("VIEW_CNT").getAsInt(),
-                    category.get("RECOMMENT_CNT").getAsInt(),
+                    jsonOnePost.get("POST_KEY").getAsInt(),
+                    jsonOnePost.get("USER_ID").getAsString(),
+                    jsonOnePost.get("CATEGORY_KEY").getAsInt(),
+                    jsonOnePost.get("POST_TITLE").getAsString(),
+                    jsonOnePost.get("POST_CONTENTS").getAsString(),
+                    jsonOnePost.get("VIEW_CNT").getAsInt(),
+                    jsonOnePost.get("RECOMMENT_CNT").getAsInt(),
                     postNotice,
                     postCommentFlag,
-                    category.get("REG_DT").getAsString(),
-                    category.get("UPD_DT").getAsString()
+                    jsonOnePost.get("REG_DT").getAsString(),
+                    jsonOnePost.get("UPD_DT").getAsString()
             );
 
             postList.add(post);
@@ -209,17 +217,25 @@ public class BoardFragment extends Fragment {
         postRecyclerView.setLayoutManager(new LinearLayoutManager(view.getContext()));
         postRecyclerView.setAdapter(postAdapter);
 
+        // 아이템 클릭했을 때의 이벤트 리스너
         postAdapter.setOnPostClickListener(new PostClickListener() {
             @Override
             public void onClickPost(View view, int position) {
                 Log.d(TAG, "BoardFragment - postPosition : " + position);
+                Timber.d("선택한 postKey : " + postList.get(position).getPostKey());
+                int postKey = postList.get(position).getPostKey();
+                int categoryKey = postList.get(position).getPostCategory();
+                String postWriter = postList.get(position).getPostWriter();
                 Intent intent = new Intent(view.getContext(), PostActivity.class);
-                intent.putExtra("postPosition", position);
+                intent.putExtra("postKey", postKey);
+                intent.putExtra("categoryKey", categoryKey);
+                intent.putExtra("postWriter", postWriter);
                 startActivity(intent);
             }
         });
 
-    }
+        Timber.d("글 마지막 번호 : " + postKey);
 
+    }
 
 }

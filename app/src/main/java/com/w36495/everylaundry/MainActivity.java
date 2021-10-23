@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 
@@ -13,6 +14,10 @@ import com.w36495.everylaundry.fragment.BoardFragment;
 import com.w36495.everylaundry.fragment.LikeFragment;
 import com.w36495.everylaundry.fragment.SearchFragment;
 import com.w36495.everylaundry.fragment.SettingFragment;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import timber.log.Timber;
 
@@ -71,7 +76,12 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-
+        // 게시물 추가했을 때 화면이동시키기
+        Intent intent = getIntent();
+        if (intent.hasExtra("PostAddActivity")) {
+            getSupportFragmentManager().beginTransaction().replace(R.id.main_frameLayout, boardFragment).commit();
+            Timber.d("BoardFragment() 호출");
+        }
 
 
 

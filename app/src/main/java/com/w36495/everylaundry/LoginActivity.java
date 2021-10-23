@@ -20,6 +20,11 @@ import com.android.volley.toolbox.Volley;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.w36495.everylaundry.data.DatabaseInfo;
+
+import org.greenrobot.eventbus.EventBus;
+
+import timber.log.Timber;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -28,6 +33,10 @@ public class LoginActivity extends AppCompatActivity {
 
     private RequestQueue requestQueue;
 
+
+
+    public static String userID;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,6 +44,10 @@ public class LoginActivity extends AppCompatActivity {
 
         if(requestQueue == null) {
             requestQueue = Volley.newRequestQueue(getApplicationContext());
+        }
+
+        if (BuildConfig.DEBUG) {
+            Timber.plant(new Timber.DebugTree());
         }
 
         setInit();
@@ -54,13 +67,12 @@ public class LoginActivity extends AppCompatActivity {
                 String userId = login_id.getText().toString();
                 String userPassword = login_password.getText().toString();
 
-
                 String URL = DatabaseInfo.loginURL;
 
                 StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        Log.d("로그", "응답 : " + response);
+                        Timber.d("onResponse() 응답 : " + response);
                         parseResponse(response, userId, userPassword);
                     }
                 },
@@ -68,13 +80,11 @@ public class LoginActivity extends AppCompatActivity {
                             @Override
                             public void onErrorResponse(VolleyError error) {
                                 // 에러나면 error로 들어옴
-                                Log.d("로그", "로그인 오류 : "+error.getMessage());
+                                Timber.d("onErrorResponse() 로그인 오류 : " + error.getMessage());
                             }
                         });
-
                 request.setShouldCache(false);
                 requestQueue.add(request);
-
             }
         });
 
@@ -83,14 +93,9 @@ public class LoginActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(), SignupActivity.class);
                 startActivity(intent);
-                Log.d("LoginActivity : ", "signup 호출()");
+                Timber.d("signup() 호출");
             }
         });
-
-
-
-
-
     }
 
     public void parseResponse(String response, String userID, String userPW) {
@@ -99,14 +104,26 @@ public class LoginActivity extends AppCompatActivity {
         JsonObject jsonObject = (JsonObject)jsonParser.parse(response);
         JsonArray jsonUser = (JsonArray) jsonObject.get("users");
 
-        // todo: jsonUser.get(index) 여기 index부분을 아이디와 일치하는 사람으로 찾아야할것같은데 고민해보자
-        JsonObject userObject = (JsonObject) jsonUser.get(0);
-        String DB_userID = userObject.get("USER_ID").getAsString();
-        String DB_userPASSWD = userObject.get("USER_PASSWD").getAsString();
+        Timber.d("parseResponse() userID : " + userID);
+
+        JsonObject userInfo = new JsonObject();
+        Timber.d("jsonUser의 size() : " + jsonUser.size());
+        for (int index=0; index<jsonUser.size(); index++) {
+            userInfo = (JsonObject) jsonUser.get(index);
+            Timber.d("사용자 아이디 : " + userInfo.get("USER_ID").getAsString());
+            // 아이디가 같다면
+            if (userID.equals(userInfo.get("USER_ID").getAsString())) {
+                Timber.d("DB아이디 : " + userInfo.get("USER_ID") + "\n로그인하는 아이디 : " + userID);
+                break;
+            }
+        }
+        String DB_userID = userInfo.get("USER_ID").getAsString();
+        String DB_userPASSWD = userInfo.get("USER_PASSWD").getAsString();
 
 
         if (DB_userID.equals(userID)) {
             if (DB_userPASSWD.equals(userPW)) {
+                this.userID = DB_userID;
                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                 startActivity(intent);
                 Toast.makeText(getApplicationContext(),"로그인에 성공하였습니다.", Toast.LENGTH_SHORT).show();
@@ -118,8 +135,6 @@ public class LoginActivity extends AppCompatActivity {
         else {
             Toast.makeText(getApplicationContext(), "아이디를 확인하세요.", Toast.LENGTH_SHORT).show();
         }
-
-
     }
 
 }
