@@ -12,6 +12,8 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -22,11 +24,16 @@ import com.android.volley.toolbox.Volley;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.w36495.everylaundry.adapter.BoardCategoryAdapter;
+import com.w36495.everylaundry.adapter.BoardCommentAdapter;
+import com.w36495.everylaundry.data.Comment;
 import com.w36495.everylaundry.data.DatabaseInfo;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+
+import java.util.ArrayList;
 
 import timber.log.Timber;
 
@@ -34,6 +41,12 @@ import timber.log.Timber;
  * 게시물 조회
  */
 public class PostActivity extends AppCompatActivity {
+
+    private RecyclerView commentRecyclerView;
+    private BoardCommentAdapter commentAdapter;
+
+    private ArrayList<Comment> commentList = new ArrayList<>();
+
     private TextView post_title, post_writer, post_regist_date, post_view_count, post_recommend_count, post_contents;
     private EditText post_comment;
     private Button post_comment_btn;
@@ -77,6 +90,11 @@ public class PostActivity extends AppCompatActivity {
         post_comment_btn = findViewById(R.id.post_comment_btn);
         post_back_btn = findViewById(R.id.post_back_btn);
         post_update_btn = findViewById(R.id.post_update_btn);
+
+        // 댓글 리싸이클러뷰
+        commentRecyclerView = findViewById(R.id.post_comment_recyclerView);
+
+        showPostComment();
 
 
         Intent intent = getIntent();
@@ -125,6 +143,58 @@ public class PostActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    /**
+     * DB 연결하여 댓글 가져와서 보여주기
+     */
+    private void showPostComment() {
+        String URL = DatabaseInfo.showBoardCommentURl;
+
+        StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                parsePostComment( response, postKey);
+            }
+        },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
+                });
+
+        request.setShouldCache(false);
+        requestQueue.add(request);
+    }
+
+    /**
+     * DB에서 댓글 가져오기
+     * @param response
+     * @param postKey
+     */
+    private void parsePostComment( String response, int postKey) {
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = (JsonObject)jsonParser.parse(response);
+        JsonArray jsonComment = (JsonArray)jsonObject.get("board_comments");
+
+        for (int index=0; index<jsonComment.size(); index++) {
+            JsonObject comments = (JsonObject)jsonComment.get(index);
+
+            if (postKey == comments.get("POST_KEY").getAsInt()) {
+                Comment comment = new Comment(comments.get("CM_KEY").getAsInt(),
+                        comments.get("CM_WRITER").getAsString(),
+                        comments.get("POST_KEY").getAsInt(),
+                        comments.get("CM_CONTENTS").getAsString(),
+                        comments.get("REG_DT").getAsString());
+
+                commentList.add(comment);
+            }
+        }
+
+        commentAdapter = new BoardCommentAdapter(this, commentList);
+        commentRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        commentRecyclerView.setAdapter(commentAdapter);
     }
 
     private void getPostContents(int postKey) {

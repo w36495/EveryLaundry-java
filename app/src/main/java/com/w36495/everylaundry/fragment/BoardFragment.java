@@ -76,13 +76,12 @@ public class BoardFragment extends Fragment {
         postRecyclerView = view.findViewById(R.id.board_post_recyclerView);
         board_add_fab = view.findViewById(R.id.board_add_fab);
 
-
-
         // 카테고리 //
         showBoardCategory(view);
 
         // 게시물
         showBoardPost(view);
+
 
         // 게시물 작성 버튼
         board_add_fab.setOnClickListener(new View.OnClickListener() {
