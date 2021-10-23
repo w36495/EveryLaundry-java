@@ -33,9 +33,8 @@ public class LoginActivity extends AppCompatActivity {
 
     private RequestQueue requestQueue;
 
-
-
     public static String userID;
+    public static String userNickNM;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -124,6 +123,7 @@ public class LoginActivity extends AppCompatActivity {
         if (DB_userID.equals(userID)) {
             if (DB_userPASSWD.equals(userPW)) {
                 this.userID = DB_userID;
+                this.userNickNM = userInfo.get("USER_NICKNM").getAsString();
                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                 startActivity(intent);
                 Toast.makeText(getApplicationContext(),"로그인에 성공하였습니다.", Toast.LENGTH_SHORT).show();

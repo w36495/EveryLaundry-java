@@ -15,6 +15,7 @@ public class BoardCommentHolder extends RecyclerView.ViewHolder {
     protected TextView comment_date;
     protected TextView comment_nickNM;
     protected TextView comment_contents;
+    protected TextView comment_flag;
 
     public BoardCommentHolder(@NonNull View itemView) {
         super(itemView);
@@ -22,5 +23,6 @@ public class BoardCommentHolder extends RecyclerView.ViewHolder {
         comment_nickNM = itemView.findViewById(R.id.comment_nickNM);
         comment_contents = itemView.findViewById(R.id.comment_contents);
         comment_date = itemView.findViewById(R.id.comment_date);
+        comment_flag = itemView.findViewById(R.id.comment_flag);
     }
 }

@@ -56,8 +56,10 @@ public class PostActivity extends AppCompatActivity {
 
     private int postKey = -1;
     private int categoryKey = -1;
+    private int commentKey = 0;
     private String postWriter = null;
     private String loginUser = LoginActivity.userID;
+    private String loginUserNickNM = LoginActivity.userNickNM;
     private boolean userFlag = true;    // 작성자 == 로그인한사람 : true, 작성자 != 로그인한사람 : false;
 
 
@@ -90,12 +92,13 @@ public class PostActivity extends AppCompatActivity {
         post_comment_btn = findViewById(R.id.post_comment_btn);
         post_back_btn = findViewById(R.id.post_back_btn);
         post_update_btn = findViewById(R.id.post_update_btn);
+        post_comment = findViewById(R.id.post_comment);
+        post_comment_btn = findViewById(R.id.post_comment_btn);
 
         // 댓글 리싸이클러뷰
         commentRecyclerView = findViewById(R.id.post_comment_recyclerView);
 
         showPostComment();
-
 
         Intent intent = getIntent();
 
@@ -143,6 +146,28 @@ public class PostActivity extends AppCompatActivity {
 
             }
         });
+
+        /**
+         * 댓글 작성 버튼
+         */
+        post_comment_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String comment = post_comment.getText().toString();
+
+
+                Timber.d("댓글키 : " + commentKey);
+                Timber.d("작성자 닉네임 : " + loginUserNickNM);
+                Timber.d("댓글작성한 글 키 : " + postKey);
+                Timber.d("댓글 : " + comment);
+
+                InsertComment insertComment = new InsertComment();
+                insertComment.execute(DatabaseInfo.setBoardCommentURL, String.valueOf(commentKey), loginUserNickNM, String.valueOf(postKey), comment);
+                Timber.d("1 added comments!");
+
+                post_comment.setText("");
+            }
+        });
     }
 
     /**
@@ -180,14 +205,13 @@ public class PostActivity extends AppCompatActivity {
 
         for (int index=0; index<jsonComment.size(); index++) {
             JsonObject comments = (JsonObject)jsonComment.get(index);
-
+            commentKey++;
             if (postKey == comments.get("POST_KEY").getAsInt()) {
                 Comment comment = new Comment(comments.get("CM_KEY").getAsInt(),
                         comments.get("CM_WRITER").getAsString(),
                         comments.get("POST_KEY").getAsInt(),
                         comments.get("CM_CONTENTS").getAsString(),
                         comments.get("REG_DT").getAsString());
-
                 commentList.add(comment);
             }
         }
