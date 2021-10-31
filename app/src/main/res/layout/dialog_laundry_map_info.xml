@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:padding="10dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="1">
+
+        <TextView
+            android:id="@+id/map_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="세탁소"
+            android:textColor="@color/textColor"
+            android:textStyle="bold"
+            android:textSize="20sp"
+            android:layout_weight="1"
+            android:padding="5dp"/>
+
+        <ImageButton
+            android:id="@+id/map_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="5dp"
+            android:src="@drawable/ic_baseline_favorite_24"
+            android:background="@color/opacity"
+            android:layout_marginLeft="5dp" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <TextView
+            android:id="@+id/map_map_img"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:background="@drawable/ic_baseline_map_24"
+            android:layout_marginRight="5dp"/>
+
+        <TextView
+            android:id="@+id/map_address"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            tools:text="경상북도 구미시 형곡동로 2-9, 102호 (형곡동, 정우 11차 맨션)"
+            android:textColor="@color/textColor"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <TextView
+            android:id="@+id/map_tel_img"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:background="@drawable/ic_baseline_call_24"
+            android:layout_marginRight="5dp"/>
+
+        <TextView
+            android:id="@+id/map_tel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="031 123 1234"
+            android:textColor="@color/textColor"
+            android:layout_gravity="center"/>
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:layout_marginVertical="8dp"
+        android:background="@color/textColor" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/review_recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+
+
+</LinearLayout>

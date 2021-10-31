@@ -38,19 +38,19 @@ dependencies {
     // Log Library - Timber
     implementation 'com.jakewharton.timber:timber:5.0.1'
 
-    // Json Library
+    // Volley
     implementation 'com.android.volley:volley:1.1.1'
 
     // Gson : Json 문자열 -> 객체로 변환
     implementation 'com.google.code.gson:gson:2.8.5'
 
-    // Retrofit2
-    implementation 'com.squareup.retrofit2:retrofit:2.4.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.4.0'
 
     // Event Bus
     implementation 'org.greenrobot:eventbus:3.2.0'
 
+    // 카카오 지도 API
+    implementation files('libs/libDaumMapAndroid.jar')
 
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'

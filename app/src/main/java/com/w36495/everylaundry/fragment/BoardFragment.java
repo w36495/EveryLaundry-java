@@ -12,6 +12,8 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.android.volley.BuildConfig;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import com.android.volley.Request;
@@ -23,7 +25,6 @@ import com.android.volley.toolbox.Volley;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.w36495.everylaundry.BuildConfig;
 import com.w36495.everylaundry.data.DatabaseInfo;
 import com.w36495.everylaundry.PostActivity;
 import com.w36495.everylaundry.PostAddActivity;

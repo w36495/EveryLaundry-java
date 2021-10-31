@@ -3,6 +3,8 @@
     package="com.w36495.everylaundry">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -13,22 +15,27 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat">
         <activity android:name=".MainActivity">
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.MAIN" />-->
-
-<!--                <category android:name="android.intent.category.LAUNCHER" />-->
-<!--            </intent-filter>-->
-        </activity>
-        <activity android:name=".LoginActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".LoginActivity" >
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
+        </activity>
         <activity android:name=".SignupActivity"/>
         <activity android:name=".PostActivity"/>
         <activity android:name=".PostAddActivity"/>
+        <activity android:name=".LaundryMapActivity" />
+
+        <meta-data
+            android:name="com.kakao.sdk.AppKey"
+            android:value="2217e68b4d018258c675afc7ec3e7a6e" />
     </application>
 
 </manifest>

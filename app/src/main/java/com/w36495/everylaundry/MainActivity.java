@@ -15,10 +15,6 @@ import com.w36495.everylaundry.fragment.LikeFragment;
 import com.w36495.everylaundry.fragment.SearchFragment;
 import com.w36495.everylaundry.fragment.SettingFragment;
 
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
-
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity {

@@ -2,7 +2,6 @@ package com.w36495.everylaundry;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -21,8 +20,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.w36495.everylaundry.data.DatabaseInfo;
-
-import org.greenrobot.eventbus.EventBus;
 
 import timber.log.Timber;
 
@@ -102,11 +99,11 @@ public class LoginActivity extends AppCompatActivity {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = (JsonObject)jsonParser.parse(response);
         JsonArray jsonUser = (JsonArray) jsonObject.get("users");
-
+        Timber.d("jsonUser의 size() : " + jsonUser.size());
         Timber.d("parseResponse() userID : " + userID);
 
         JsonObject userInfo = new JsonObject();
-        Timber.d("jsonUser의 size() : " + jsonUser.size());
+
         for (int index=0; index<jsonUser.size(); index++) {
             userInfo = (JsonObject) jsonUser.get(index);
             Timber.d("사용자 아이디 : " + userInfo.get("USER_ID").getAsString());
