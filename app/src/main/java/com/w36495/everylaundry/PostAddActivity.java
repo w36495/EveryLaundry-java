@@ -1,6 +1,7 @@
 package com.w36495.everylaundry;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -130,7 +131,8 @@ public class PostAddActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // todo: 세션사용해서 사용자 정보 가져오기
-                String userID = LoginActivity.userID;
+                SharedPreferences sharedPreferences = getSharedPreferences("session", 0);
+                String userID = sharedPreferences.getString("userID", "");
                 Timber.d("userID : " + userID);
                 String postTitle = post_add_title.getText().toString();
                 String postContents = post_add_contents.getText().toString();

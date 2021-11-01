@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
 
@@ -38,6 +39,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setInit() {
+
+        SharedPreferences sharedPreferences = getSharedPreferences("session", 0);
+        String userID = sharedPreferences.getString("userID", "");
+        String userSession = sharedPreferences.getString("session", "");
+
 
         searchFragment = new SearchFragment();
         likeFragment = new LikeFragment();
@@ -110,6 +116,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        SharedPreferences sharedPreferences = getSharedPreferences("session", 0);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.clear();
+        editor.commit();
+        System.out.println("===============종료될때 세션값보기");
+        sharedPreferences.getAll();
         Timber.d("onDestroy() 호출");
     }
 

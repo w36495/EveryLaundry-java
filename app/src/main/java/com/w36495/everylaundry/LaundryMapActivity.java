@@ -1,6 +1,7 @@
 package com.w36495.everylaundry;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -167,11 +168,20 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
     @Override
     public void onPOIItemSelected(MapView mapView, MapPOIItem mapPOIItem) {
         int mapKey = mapPOIItem.getTag();
-
         Laundry laundry = laundryList.get(mapKey);
 
+        // 하단에 세탁소 정보 다이얼로그 띄우기
         LaundryInfoDialog dialog = new LaundryInfoDialog(LaundryMapActivity.this, laundry);
         dialog.show();
+
+        SharedPreferences sharedPreferences = getSharedPreferences("session", 0);
+        String userID = sharedPreferences.getString("userID", "");
+        String laundryKey = String.valueOf(mapKey);
+
+
+        // DB의 LAUNDRY_DEATIL에 삽입하기
+        InsertLaundryLike insertLaundryLike = new InsertLaundryLike();
+        insertLaundryLike.execute(DatabaseInfo.insertLaundryLikeURL, userID, laundryKey);
 
     }
 

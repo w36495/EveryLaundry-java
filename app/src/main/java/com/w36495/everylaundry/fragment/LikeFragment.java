@@ -24,7 +24,7 @@ public class LikeFragment extends Fragment {
     private RecyclerView like_recyclerView;
     private LaundryLikeAdapter laundryLikeAdapter;
 
-    private ArrayList<Laundry> laundryList = new ArrayList<>();
+    private ArrayList<Laundry> laundryList;
 
     @Nullable
     @Override
@@ -40,6 +40,8 @@ public class LikeFragment extends Fragment {
     private void setInit(View view) {
 
         like_recyclerView = view.findViewById(R.id.like_recyclerView);
+
+        laundryList = new ArrayList<>();
 
         laundryList.add(new Laundry(000001, "세탁소명", "전화번호", "도로명주소", "우편번호", 0.0, 0.1));
         laundryList.add(new Laundry(000001, "세탁소명", "전화번호", "도로명주소", "우편번호", 0.0, 0.1));

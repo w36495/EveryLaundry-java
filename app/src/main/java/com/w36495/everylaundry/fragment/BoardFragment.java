@@ -1,6 +1,7 @@
 package com.w36495.everylaundry.fragment;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -39,8 +40,6 @@ import java.util.ArrayList;
 import timber.log.Timber;
 
 public class BoardFragment extends Fragment {
-    private static String TAG = "로그";
-
     private RecyclerView categoryRecyclerView;
     private RecyclerView postRecyclerView;
     private BoardCategoryAdapter categoryAdapter;
@@ -51,8 +50,8 @@ public class BoardFragment extends Fragment {
     private RequestQueue requestQueue;
 
     private int postKey = 0;
-    public static ArrayList<String> categoryList = new ArrayList<>();
-    private ArrayList<Post> postList = new ArrayList<>();
+    public static ArrayList<String> categoryList;
+    private ArrayList<Post> postList;
 
     @Nullable
     @Override
@@ -90,7 +89,6 @@ public class BoardFragment extends Fragment {
             public void onClick(View v) {
                 Intent intent = new Intent(view.getContext(), PostAddActivity.class);
                 intent.putExtra("postKey", postKey);
-                //intent.putStringArrayListExtra("categoryList", categoryList);
                 startActivity(intent);
             }
         });
@@ -105,14 +103,14 @@ public class BoardFragment extends Fragment {
         StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-                Log.d(TAG, "BoardFragment - showBoardCategory() - onResponse : " + response);
+                Timber.d("showBoardCategory() - onResponse : " + response);
                 parseBoardCategory(response, view, categoryList);
             }
         },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Log.d(TAG, "BoardFragment - showBoardCategory() - onErrorResponse : " + error);
+                        Timber.d("showBoardCategory() - onErrorResponse : " + error);
                         return;
                     }
                 });
@@ -125,6 +123,8 @@ public class BoardFragment extends Fragment {
      * DB로부터 가져온 카테고리데이터 가공 => 어댑터통해서 카테고리 띄우기
      */
     private void parseBoardCategory(String response, View view, ArrayList<String> categoryList) {
+
+        categoryList = new ArrayList<>();
 
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = (JsonObject)jsonParser.parse(response);
@@ -140,7 +140,7 @@ public class BoardFragment extends Fragment {
             categoryList.add(builder.toString());
         }
 
-        categoryAdapter = new BoardCategoryAdapter(view.getContext(), this.categoryList);
+        categoryAdapter = new BoardCategoryAdapter(view.getContext(), categoryList);
         categoryRecyclerView.setLayoutManager(new LinearLayoutManager(view.getContext(), LinearLayoutManager.HORIZONTAL, false));
         categoryRecyclerView.setAdapter(categoryAdapter);
     }
@@ -155,14 +155,15 @@ public class BoardFragment extends Fragment {
         StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-                Log.d(TAG, "BoardFragment - showBoardPost() - onResponse : " + response);
-                parseBoardPost(response, view, postList);
+                Timber.d("showBoardPost() - onResponse : " + response);
+                //parseBoardPost(response, view, postList);
+                parseBoardPost(response, view);
             }
         },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Log.d(TAG, "BoardFragment - showBoardPost() - onErrorResponse : " + error);
+                        Timber.d("showBoardPost() - onErrorResponse : " + error);
                         return;
                     }
                 });
@@ -171,11 +172,12 @@ public class BoardFragment extends Fragment {
         requestQueue.add(request);
     }
 
-    private void parseBoardPost(String response, View view, ArrayList<Post> postList) {
+    private void parseBoardPost(String response, View view) {
+        postList = new ArrayList<>();
 
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = (JsonObject)jsonParser.parse(response);
-        JsonArray jsonPost = (JsonArray)jsonObject.get("board_post");
+        JsonArray jsonPost = (JsonArray)jsonObject.get("posts");
 
         postKey = jsonPost.size();
 
@@ -213,15 +215,15 @@ public class BoardFragment extends Fragment {
             System.out.println(post.toString());
         }
 
-        postAdapter = new BoardPostAdapter(view.getContext(), this.postList);
+        postAdapter = new BoardPostAdapter(view.getContext(), postList);
         postRecyclerView.setLayoutManager(new LinearLayoutManager(view.getContext()));
         postRecyclerView.setAdapter(postAdapter);
 
-        // 아이템 클릭했을 때의 이벤트 리스너
+        // 게시물 클릭했을 때의 이벤트 리스너
         postAdapter.setOnPostClickListener(new PostClickListener() {
             @Override
             public void onClickPost(View view, int position) {
-                Log.d(TAG, "BoardFragment - postPosition : " + position);
+                Timber.d("postPosition : " + position);
                 Timber.d("선택한 postKey : " + postList.get(position).getPostKey());
                 int postKey = postList.get(position).getPostKey();
                 int categoryKey = postList.get(position).getPostCategory();

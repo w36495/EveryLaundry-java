@@ -1,6 +1,7 @@
 package com.w36495.everylaundry;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -45,7 +46,7 @@ public class PostActivity extends AppCompatActivity {
     private RecyclerView commentRecyclerView;
     private BoardCommentAdapter commentAdapter;
 
-    private ArrayList<Comment> commentList = new ArrayList<>();
+    private ArrayList<Comment> commentList;
 
     private TextView post_title, post_writer, post_regist_date, post_view_count, post_recommend_count, post_contents;
     private EditText post_comment;
@@ -58,8 +59,8 @@ public class PostActivity extends AppCompatActivity {
     private int categoryKey = -1;
     private int commentKey = 0;
     private String postWriter = null;
-    private String loginUser = LoginActivity.userID;
-    private String loginUserNickNM = LoginActivity.userNickNM;
+    private String loginUser = null;
+    private String loginUserNickNM = null;
     private boolean userFlag = true;    // 작성자 == 로그인한사람 : true, 작성자 != 로그인한사람 : false;
 
 
@@ -112,7 +113,14 @@ public class PostActivity extends AppCompatActivity {
 
         getPostContents(postKey);
 
-        // 작성자 != 로그인 한 사람
+        // 세션 확인
+        SharedPreferences sharedPreferences = getSharedPreferences("session", 0);
+        if (sharedPreferences.getString("session", "") != null) {
+            loginUser = sharedPreferences.getString("userID", "");
+            loginUserNickNM = sharedPreferences.getString("userNickNM", "");
+        }
+
+        // 작성자 != 로그인 한 사람이면 수정버튼 대신 따봉(추천)버튼 보이기
         if (!loginUser.equals(postWriter)) {
             userFlag = false;
             post_update_btn.setImageResource(R.drawable.ic_baseline_thumb_up_off_alt_24);
@@ -154,7 +162,6 @@ public class PostActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String comment = post_comment.getText().toString();
-
 
                 Timber.d("댓글키 : " + commentKey);
                 Timber.d("작성자 닉네임 : " + loginUserNickNM);
@@ -199,6 +206,8 @@ public class PostActivity extends AppCompatActivity {
      * @param postKey
      */
     private void parsePostComment( String response, int postKey) {
+
+        commentList = new ArrayList<>();
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = (JsonObject)jsonParser.parse(response);
         JsonArray jsonComment = (JsonArray)jsonObject.get("board_comments");
@@ -216,7 +225,7 @@ public class PostActivity extends AppCompatActivity {
             }
         }
 
-        commentAdapter = new BoardCommentAdapter(this, commentList);
+        commentAdapter = new BoardCommentAdapter(this, commentList, postWriter);
         commentRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         commentRecyclerView.setAdapter(commentAdapter);
     }
@@ -248,7 +257,7 @@ public class PostActivity extends AppCompatActivity {
     private void parsePostContents(String response, int postKey) {
         JsonParser jsonParser = new JsonParser();
         JsonObject object = (JsonObject) jsonParser.parse(response);
-        JsonArray postArray = (JsonArray) object.get("board_post");
+        JsonArray postArray = (JsonArray) object.get("posts");
 
         JsonObject post = new JsonObject();
         for (int index=0; index<postArray.size(); index++) {
@@ -268,6 +277,8 @@ public class PostActivity extends AppCompatActivity {
         post_regist_date.setText(post.get("REG_DT").getAsString());
         post_view_count.setText(post.get("VIEW_CNT").getAsString());
         post_recommend_count.setText(post.get("RECOMMENT_CNT").getAsString());
+
+        this.postWriter = post.get("USER_ID").getAsString();
 
     }
 

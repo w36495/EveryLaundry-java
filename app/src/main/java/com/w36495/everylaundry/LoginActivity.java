@@ -1,7 +1,10 @@
 package com.w36495.everylaundry;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -21,6 +24,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.w36495.everylaundry.data.DatabaseInfo;
 
+import java.net.CookieManager;
+
 import timber.log.Timber;
 
 public class LoginActivity extends AppCompatActivity {
@@ -30,8 +35,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private RequestQueue requestQueue;
 
-    public static String userID;
-    public static String userNickNM;
+    private SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -98,7 +102,7 @@ public class LoginActivity extends AppCompatActivity {
 
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = (JsonObject)jsonParser.parse(response);
-        JsonArray jsonUser = (JsonArray) jsonObject.get("users");
+        JsonArray jsonUser = (JsonArray) jsonObject.get("userInfo");
         Timber.d("jsonUser의 size() : " + jsonUser.size());
         Timber.d("parseResponse() userID : " + userID);
 
@@ -113,17 +117,26 @@ public class LoginActivity extends AppCompatActivity {
                 break;
             }
         }
+
+
+
+        String session = userInfo.get("SESSION").getAsString();
         String DB_userID = userInfo.get("USER_ID").getAsString();
         String DB_userPASSWD = userInfo.get("USER_PASSWD").getAsString();
 
 
         if (DB_userID.equals(userID)) {
             if (DB_userPASSWD.equals(userPW)) {
-                this.userID = DB_userID;
-                this.userNickNM = userInfo.get("USER_NICKNM").getAsString();
+                sharedPreferences = getSharedPreferences("session", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString("userID", userID);
+                editor.putString("session", session);
+                editor.putString("userNickNM", userInfo.get("USER_NICKNM").getAsString());
                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                 startActivity(intent);
+                editor.commit();
                 Toast.makeText(getApplicationContext(),"로그인에 성공하였습니다.", Toast.LENGTH_SHORT).show();
+                System.out.println("세션저장 성공 : " + sharedPreferences.getAll());
             }
             else {
                 Toast.makeText(getApplicationContext(), "비밀번호를 확인하세요.", Toast.LENGTH_LONG).show();

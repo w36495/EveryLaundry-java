@@ -33,7 +33,7 @@ public class SearchFragment extends Fragment {
 
     private EditText search_laundry;
 
-    private ArrayList<Laundry> laundryList = new ArrayList<>();
+    private ArrayList<Laundry> laundryList;
 
     @Nullable
     @Override
@@ -51,6 +51,7 @@ public class SearchFragment extends Fragment {
         search_recyclerView = view.findViewById(R.id.search_recyclerView);
         search_laundry = view.findViewById(R.id.search_laundry);
 
+        laundryList = new ArrayList<>();
         laundryList.add(new Laundry(000001, "세탁소명", "전화번호", "도로명주소", "우편번호", 0.0, 0.1));
         laundryList.add(new Laundry(000001, "세탁소명", "전화번호", "도로명주소", "우편번호", 0.0, 0.1));
         laundryList.add(new Laundry(000001, "세탁소명", "전화번호", "도로명주소", "우편번호", 0.0, 0.1));

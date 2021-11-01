@@ -1,7 +1,9 @@
 package com.w36495.everylaundry;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
@@ -37,10 +39,12 @@ public class LaundryInfoDialog extends BottomSheetDialog {
     private ReviewAdapter reviewAdapter;
 
     private TextView map_title, map_address, map_tel;
-    private ImageButton map_btn;
+    private ImageButton map_like_btn;
 
-    private ArrayList<Review> reviewList = new ArrayList<>();
+    private ArrayList<Review> resultReviewList;
     private RequestQueue requestQueue;
+
+    private String loginUserID = null;
 
     public LaundryInfoDialog(@NonNull Context context, Laundry laundry) {
         super(context);
@@ -72,7 +76,7 @@ public class LaundryInfoDialog extends BottomSheetDialog {
         map_title = findViewById(R.id.map_title);
         map_address = findViewById(R.id.map_address);
         map_tel = findViewById(R.id.map_tel);
-        map_btn = findViewById(R.id.map_btn);
+        map_like_btn = findViewById(R.id.map_like_btn);
 
         reviewReycyclerView = findViewById(R.id.review_recyclerView);
 
@@ -83,6 +87,9 @@ public class LaundryInfoDialog extends BottomSheetDialog {
         map_title.setText(laundry.getLaundryName());
         map_address.setText(laundry.getLaundryAddress());
         map_tel.setText(laundry.getLaundryTel());
+
+        SharedPreferences sharedPreferences = context.getSharedPreferences("session", 0);
+        loginUserID = sharedPreferences.getString("userID", "");
 
 
         String URL = DatabaseInfo.showLaundryReviewURL;
@@ -104,10 +111,19 @@ public class LaundryInfoDialog extends BottomSheetDialog {
         request.setShouldCache(false);
         requestQueue.add(request);
 
+        map_like_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //todo : 사용자가 하트버튼 누르면 -> db의 LIKE_FLAG 'Y'로 변경 후 아이콘도 변경하기
+                updateLaundryDetail updateLaundryDetail = new updateLaundryDetail();
+                updateLaundryDetail.execute(DatabaseInfo.updateLaundryLikeURL, loginUserID, String.valueOf(laundry.getLaundryKey()));
+            }
+        });
+
     }
 
     private void parseResponse(String response) {
-        ArrayList<Review> resultReviewList = new ArrayList<>();
+        resultReviewList = new ArrayList<>();
 
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = (JsonObject)jsonParser.parse(response);
