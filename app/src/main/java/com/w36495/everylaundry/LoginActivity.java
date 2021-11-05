@@ -23,6 +23,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.w36495.everylaundry.data.DatabaseInfo;
+import com.w36495.everylaundry.data.User;
 
 import java.net.CookieManager;
 
@@ -81,6 +82,7 @@ public class LoginActivity extends AppCompatActivity {
                             public void onErrorResponse(VolleyError error) {
                                 // 에러나면 error로 들어옴
                                 Timber.d("onErrorResponse() 로그인 오류 : " + error.getMessage());
+                                error.printStackTrace();
                             }
                         });
                 request.setShouldCache(false);
@@ -118,8 +120,6 @@ public class LoginActivity extends AppCompatActivity {
             }
         }
 
-
-
         String session = userInfo.get("SESSION").getAsString();
         String DB_userID = userInfo.get("USER_ID").getAsString();
         String DB_userPASSWD = userInfo.get("USER_PASSWD").getAsString();
@@ -129,9 +129,9 @@ public class LoginActivity extends AppCompatActivity {
             if (DB_userPASSWD.equals(userPW)) {
                 sharedPreferences = getSharedPreferences("session", Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.putString("userID", userID);
                 editor.putString("session", session);
-                editor.putString("userNickNM", userInfo.get("USER_NICKNM").getAsString());
+                editor.putString("loginID", userInfo.get("USER_ID").getAsString());
+                editor.putString("loginNickNM", userInfo.get("USER_NICKNM").getAsString());
                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                 startActivity(intent);
                 editor.commit();

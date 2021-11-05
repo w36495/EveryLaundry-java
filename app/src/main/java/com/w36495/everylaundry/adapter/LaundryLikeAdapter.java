@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.w36495.everylaundry.data.Laundry;
 import com.w36495.everylaundry.R;
+import com.w36495.everylaundry.data.LaundryLike;
 
 import java.util.ArrayList;
 
@@ -19,9 +20,9 @@ import java.util.ArrayList;
 public class LaundryLikeAdapter extends RecyclerView.Adapter<LaundryLikeHolder> {
 
     private Context context;
-    private ArrayList<Laundry> laundryList;
+    private ArrayList<LaundryLike> laundryList;
 
-    public LaundryLikeAdapter(Context context, ArrayList<Laundry> laundryList) {
+    public LaundryLikeAdapter(Context context, ArrayList<LaundryLike> laundryList) {
         this.context = context;
         this.laundryList = laundryList;
     }
@@ -36,8 +37,7 @@ public class LaundryLikeAdapter extends RecyclerView.Adapter<LaundryLikeHolder> 
     @Override
     public void onBindViewHolder(@NonNull LaundryLikeHolder holder, int position) {
         holder.like_pin.setImageResource(R.drawable.ic_baseline_push_pin_24);
-        holder.like_name.setText(laundryList.get(position).getLaundryName());
-        holder.like_zip_code.setText(laundryList.get(position).getLaundryZipCode());
+        holder.like_name.setText(laundryList.get(position).getLaundryNM());
         holder.like_address.setText(laundryList.get(position).getLaundryAddress());
         holder.like_tel.setText(laundryList.get(position).getLaundryTel());
     }

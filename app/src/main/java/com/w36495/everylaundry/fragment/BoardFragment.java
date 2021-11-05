@@ -215,7 +215,7 @@ public class BoardFragment extends Fragment {
             System.out.println(post.toString());
         }
 
-        postAdapter = new BoardPostAdapter(view.getContext(), postList);
+        postAdapter = new BoardPostAdapter(view.getContext(), postList, BoardFragment.categoryList);
         postRecyclerView.setLayoutManager(new LinearLayoutManager(view.getContext()));
         postRecyclerView.setAdapter(postAdapter);
 

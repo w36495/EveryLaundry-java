@@ -11,6 +11,7 @@ import android.view.MenuItem;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
+import com.w36495.everylaundry.data.User;
 import com.w36495.everylaundry.fragment.BoardFragment;
 import com.w36495.everylaundry.fragment.LikeFragment;
 import com.w36495.everylaundry.fragment.SearchFragment;
@@ -27,6 +28,9 @@ public class MainActivity extends AppCompatActivity {
 
     private BottomNavigationView bottomNav;
 
+    private static String loginID = null;
+    private static String loginNickNM = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -34,6 +38,20 @@ public class MainActivity extends AppCompatActivity {
 
         Timber.plant(new Timber.DebugTree());
         Timber.d("onCreate() 호출");
+
+        SharedPreferences  sharedPreferences = getSharedPreferences("session", 0);
+        // 로그인으로부터 세션이 넘어온 것이 없다면, 다시 로그인 화면으로 돌려주기
+        if (sharedPreferences.getAll() == null) {
+            Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+            startActivity(intent);
+        }
+        // 세션이 있다면
+        else {
+            setLoginUserID(sharedPreferences.getString("loginID", ""));
+            setLoginUserNickNM(sharedPreferences.getString("loginNickNM", ""));
+            Timber.d("현재 로그인 한 사람의 ID : " + loginID);
+            Timber.d("현재 로그인 한 사람의 NickNM : " + loginNickNM);
+        }
 
         setInit();
     }
@@ -60,16 +78,16 @@ public class MainActivity extends AppCompatActivity {
                 switch (item.getItemId()) {
                     case R.id.nav_list:
                         getSupportFragmentManager().beginTransaction().replace(R.id.main_frameLayout, searchFragment).commit();
-                        break;
+                        return true;
                     case R.id.nav_like:
                         getSupportFragmentManager().beginTransaction().replace(R.id.main_frameLayout, likeFragment).commit();
-                        break;
+                        return true;
                     case R.id.nav_board:
                         getSupportFragmentManager().beginTransaction().replace(R.id.main_frameLayout, boardFragment).commit();
-                        break;
+                        return true;
                     case R.id.nav_setting:
                         getSupportFragmentManager().beginTransaction().replace(R.id.main_frameLayout, settingFragment).commit();
-                        break;
+                        return true;
 
                 }
                 return false;
@@ -77,18 +95,41 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
         // 게시물 추가했을 때 화면이동시키기
         Intent intent = getIntent();
         if (intent.hasExtra("PostAddActivity")) {
             getSupportFragmentManager().beginTransaction().replace(R.id.main_frameLayout, boardFragment).commit();
             Timber.d("BoardFragment() 호출");
         }
-
-
-
     }
 
+    /**
+     * 현재 로그인 한 사용자의 아이디
+     * @return
+     */
+    public static String getLoginUserID() {
+        return loginID;
+    }
+
+    private void setLoginUserID(String loginID) {
+        this.loginID = loginID;
+    }
+
+    /**
+     * 현재 로그인 한 사용자의 닉네임
+     * @return
+     */
+    public static String getLoginUserNickNM() {
+        return loginNickNM;
+    }
+
+    private void setLoginUserNickNM(String loginNickNM) {
+        this.loginNickNM = loginNickNM;
+    }
+
+    /**
+     * 생명주기
+     */
     @Override
     protected void onStart() {
         super.onStart();

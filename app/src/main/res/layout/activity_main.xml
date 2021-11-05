@@ -24,6 +24,7 @@
         android:background="@drawable/nav_background_gray"
         app:menu="@menu/nav_menu"
         app:itemRippleColor="@color/textColor"
+        app:labelVisibilityMode="unlabeled"
         app:layout_constraintTop_toBottomOf="@id/main_frameLayout"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"

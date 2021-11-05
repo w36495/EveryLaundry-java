@@ -33,6 +33,9 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import timber.log.Timber;
 
+/**
+ * 세탁소 맵 보여지는 액티비티
+ */
 public class LaundryMapActivity extends AppCompatActivity implements MapView.POIItemEventListener {
 
     private MapView mapView;
@@ -84,16 +87,14 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
         fab_zoomIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int zoomLevel = mapView.getZoomLevel();
-                mapView.setZoomLevel(--zoomLevel, true);
+                setZoomInOut(true);
             }
         });
 
         fab_zoomOut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int zoomLevel = mapView.getZoomLevel();
-                mapView.setZoomLevel(++zoomLevel, true);
+                setZoomInOut(false);
             }
         });
 
@@ -116,8 +117,21 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
                 });
         request.setShouldCache(false);
         requestQueue.add(request);
+    }
 
-
+    /**
+     * 지도 확대/축소
+     * 확대 = true, 축소 = false
+     * @param isZoomIn
+     */
+    private void setZoomInOut(boolean isZoomIn) {
+        int zoomLevel = mapView.getZoomLevel();
+        if (isZoomIn == true) {
+            mapView.setZoomLevel(--zoomLevel, true);
+        }
+        else {
+            mapView.setZoomLevel(++zoomLevel, true);
+        }
     }
 
     private void parseResponse(String response) {
@@ -146,7 +160,10 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
         setMapViewMarker(resultLaundry);
     }
 
-    // 지도에 마커 설정
+    /**
+     * DB에 저장되어 있는 세탁소 정보들 마커로 표시
+     * @param DB_laundryList
+     */
     private void setMapViewMarker(ArrayList<Laundry> DB_laundryList) {
         this.laundryList = DB_laundryList;
 
@@ -164,7 +181,13 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
 
     }
 
-    // 지도 마커를 클릭했을 때의 이벤트 => 하단에 다이얼로그로 세탁소 정보 띄우기
+    /**
+     * 지도의 마커를 클릭했을 때
+     * 1) 하단에 선택된 세탁소의 정보 표시
+     * 2) 사용자가 선택한 세탁소 DB에 저장
+     * @param mapView
+     * @param mapPOIItem
+     */
     @Override
     public void onPOIItemSelected(MapView mapView, MapPOIItem mapPOIItem) {
         int mapKey = mapPOIItem.getTag();
@@ -174,14 +197,12 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
         LaundryInfoDialog dialog = new LaundryInfoDialog(LaundryMapActivity.this, laundry);
         dialog.show();
 
-        SharedPreferences sharedPreferences = getSharedPreferences("session", 0);
-        String userID = sharedPreferences.getString("userID", "");
         String laundryKey = String.valueOf(mapKey);
-
+        String loginID = MainActivity.getLoginUserID();
 
         // DB의 LAUNDRY_DEATIL에 삽입하기
         InsertLaundryLike insertLaundryLike = new InsertLaundryLike();
-        insertLaundryLike.execute(DatabaseInfo.insertLaundryLikeURL, userID, laundryKey);
+        insertLaundryLike.execute(DatabaseInfo.insertLaundryLikeURL, loginID, laundryKey);
 
     }
 
