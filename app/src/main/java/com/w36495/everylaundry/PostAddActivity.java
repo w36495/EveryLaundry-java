@@ -38,6 +38,7 @@ public class PostAddActivity extends AppCompatActivity {
     private int categoryKey = -1;
     private boolean postFlag = true;    // true : 추가, false : 수정
 
+
     private String[] categoryList;
 
     @Override
@@ -126,14 +127,20 @@ public class PostAddActivity extends AppCompatActivity {
             }
         });
 
+        // todo : 뒤로가기 버튼 클릭했을 때 -> 글 내용으로 이동 (콜백사용)
+        post_add_back_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+
         // 확인(저장) 버튼을 클릭했을 때 -> DB에 데이터 전송
         post_add_save_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // todo: 세션사용해서 사용자 정보 가져오기
-                SharedPreferences sharedPreferences = getSharedPreferences("session", 0);
-                String userID = sharedPreferences.getString("userID", "");
-                Timber.d("userID : " + userID);
+                String loginID = MainActivity.getLoginUserID();
+                Timber.d("userID : " + loginID);
                 String postTitle = post_add_title.getText().toString();
                 String postContents = post_add_contents.getText().toString();
 
@@ -145,7 +152,7 @@ public class PostAddActivity extends AppCompatActivity {
                     if (postFlag) {
                         // DB에 저장
                         InsertPost insertPost = new InsertPost();
-                        insertPost.execute(DatabaseInfo.setPostURL, String.valueOf(++postKey), userID, String.valueOf(categoryKey), postTitle, postContents);
+                        insertPost.execute(DatabaseInfo.setPostURL, String.valueOf(++postKey), loginID, String.valueOf(categoryKey), postTitle, postContents);
                         Timber.d("1 added Success!");
                     } else {
                         UpdatePost updatePost = new UpdatePost();

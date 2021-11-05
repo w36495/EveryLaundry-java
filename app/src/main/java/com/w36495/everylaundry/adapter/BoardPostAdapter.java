@@ -38,14 +38,14 @@ public class BoardPostAdapter extends RecyclerView.Adapter<BoardPostHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull BoardPostHolder holder, int position) {
-        //todo: 게시물 목록에서 게시판 카테고리 보이게 하는 것
-//        int postCategory = postList.get(position).getPostCategory();
-//        for (int index = 0; index < categoryList.size(); index++) {
-//            if (postCategory == index) {
-//                holder.postListCategory.setText(categoryList.get(index));
-//                break;
-//            }
-//        }
+        int postCategory = postList.get(position).getPostCategory();
+        for (int index = 0; index < categoryList.size(); index++) {
+            if (postCategory == index) {
+                holder.postListCategory.setText(categoryList.get(index));
+                break;
+            }
+        }
+
         holder.postListTitle.setText(postList.get(position).getPostTitle());
         holder.postListWriter.setText(postList.get(position).getPostWriter());
         holder.postListRegistDate.setText(postList.get(position).getPostRegistDate());

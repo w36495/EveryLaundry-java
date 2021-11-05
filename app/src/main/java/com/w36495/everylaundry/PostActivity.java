@@ -29,6 +29,7 @@ import com.w36495.everylaundry.adapter.BoardCategoryAdapter;
 import com.w36495.everylaundry.adapter.BoardCommentAdapter;
 import com.w36495.everylaundry.data.Comment;
 import com.w36495.everylaundry.data.DatabaseInfo;
+import com.w36495.everylaundry.util.DateUtil;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -59,8 +60,8 @@ public class PostActivity extends AppCompatActivity {
     private int categoryKey = -1;
     private int commentKey = 0;
     private String postWriter = null;
-    private String loginUser = null;
-    private String loginUserNickNM = null;
+    private String loginID = null;
+    private String loginNickNM = null;
     private boolean userFlag = true;    // 작성자 == 로그인한사람 : true, 작성자 != 로그인한사람 : false;
 
 
@@ -113,15 +114,12 @@ public class PostActivity extends AppCompatActivity {
 
         getPostContents(postKey);
 
-        // 세션 확인
-        SharedPreferences sharedPreferences = getSharedPreferences("session", 0);
-        if (sharedPreferences.getString("session", "") != null) {
-            loginUser = sharedPreferences.getString("userID", "");
-            loginUserNickNM = sharedPreferences.getString("userNickNM", "");
-        }
+        // 세션으로부터 현재 로그인한 사용자의 아이디와 닉네임 넘겨받기
+        loginID = MainActivity.getLoginUserID();
+        loginNickNM = MainActivity.getLoginUserNickNM();
 
         // 작성자 != 로그인 한 사람이면 수정버튼 대신 따봉(추천)버튼 보이기
-        if (!loginUser.equals(postWriter)) {
+        if (!loginID.equals(postWriter)) {
             userFlag = false;
             post_update_btn.setImageResource(R.drawable.ic_baseline_thumb_up_off_alt_24);
         }
@@ -164,12 +162,12 @@ public class PostActivity extends AppCompatActivity {
                 String comment = post_comment.getText().toString();
 
                 Timber.d("댓글키 : " + commentKey);
-                Timber.d("작성자 닉네임 : " + loginUserNickNM);
+                Timber.d("작성자 닉네임 : " + loginNickNM);
                 Timber.d("댓글작성한 글 키 : " + postKey);
                 Timber.d("댓글 : " + comment);
 
                 InsertComment insertComment = new InsertComment();
-                insertComment.execute(DatabaseInfo.setBoardCommentURL, String.valueOf(commentKey), loginUserNickNM, String.valueOf(postKey), comment);
+                insertComment.execute(DatabaseInfo.setBoardCommentURL, String.valueOf(commentKey), loginNickNM, String.valueOf(postKey), comment);
                 Timber.d("1 added comments!");
 
                 post_comment.setText("");
@@ -271,10 +269,13 @@ public class PostActivity extends AppCompatActivity {
         System.out.println("내용 : " + post.get("POST_CONTENTS"));
         System.out.println("글쓴이 : " + post.get("USER_ID"));
 
+        // 날짜
+        String registDate = DateUtil.parseDate(post.get("REG_DT").getAsString());
+
         post_title.setText(post.get("POST_TITLE").getAsString());
         post_contents.setText(post.get("POST_CONTENTS").getAsString());
         post_writer.setText(post.get("USER_ID").getAsString());
-        post_regist_date.setText(post.get("REG_DT").getAsString());
+        post_regist_date.setText(registDate);
         post_view_count.setText(post.get("VIEW_CNT").getAsString());
         post_recommend_count.setText(post.get("RECOMMENT_CNT").getAsString());
 

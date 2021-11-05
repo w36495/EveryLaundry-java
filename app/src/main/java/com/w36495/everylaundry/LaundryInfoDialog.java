@@ -114,7 +114,7 @@ public class LaundryInfoDialog extends BottomSheetDialog {
         map_like_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                updateLaundryDetail updateLaundryDetail = new updateLaundryDetail();
+                UpdateLaundryDetail updateLaundryDetail = new UpdateLaundryDetail();
                 updateLaundryDetail.execute(DatabaseInfo.updateLaundryLikeURL, loginUserID, String.valueOf(laundry.getLaundryKey()));
                 //todo : 사용자의 LIKE_FLAG에 맞춰 아이콘 변경
             }

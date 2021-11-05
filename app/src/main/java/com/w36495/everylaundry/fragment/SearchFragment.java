@@ -14,10 +14,25 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.volley.BuildConfig;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.w36495.everylaundry.LaundryMapActivity;
+import com.w36495.everylaundry.MainActivity;
+import com.w36495.everylaundry.adapter.LaundryLikeAdapter;
+import com.w36495.everylaundry.data.DatabaseInfo;
 import com.w36495.everylaundry.data.Laundry;
 import com.w36495.everylaundry.R;
 import com.w36495.everylaundry.adapter.LaundrySearchAdapter;
+import com.w36495.everylaundry.data.LaundryLike;
+import com.w36495.everylaundry.data.LaundrySearch;
 
 import java.util.ArrayList;
 
@@ -33,15 +48,21 @@ public class SearchFragment extends Fragment {
 
     private EditText search_laundry;
 
-    private ArrayList<Laundry> laundryList;
+    private ArrayList<LaundrySearch> laundryList;
+
+    private RequestQueue requestQueue;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_search_list, container, false);
-        Timber.plant(new Timber.DebugTree());
+        if (BuildConfig.DEBUG) {
+            Timber.plant(new Timber.DebugTree());
+        }
 
-        Timber.d("onCreateView");
+        if (requestQueue == null) {
+            requestQueue = Volley.newRequestQueue(view.getContext());
+        }
         setInit(view);
         return view;
     }
@@ -51,14 +72,7 @@ public class SearchFragment extends Fragment {
         search_recyclerView = view.findViewById(R.id.search_recyclerView);
         search_laundry = view.findViewById(R.id.search_laundry);
 
-        laundryList = new ArrayList<>();
-        laundryList.add(new Laundry(000001, "세탁소명", "전화번호", "도로명주소", "우편번호", 0.0, 0.1));
-        laundryList.add(new Laundry(000001, "세탁소명", "전화번호", "도로명주소", "우편번호", 0.0, 0.1));
-        laundryList.add(new Laundry(000001, "세탁소명", "전화번호", "도로명주소", "우편번호", 0.0, 0.1));
-
-        laundrySearchAdapter = new LaundrySearchAdapter(view.getContext(), laundryList);
-        search_recyclerView.setLayoutManager(new LinearLayoutManager(view.getContext()));
-        search_recyclerView.setAdapter(laundrySearchAdapter);
+        showLaundrySearchList(view);
 
         // 검색창 버튼 클릭했을 때
         search_laundry.setOnClickListener(new View.OnClickListener() {
@@ -69,6 +83,66 @@ public class SearchFragment extends Fragment {
             }
         });
 
+    }
+
+    /**
+     * 즐겨찾는 세탁소 목록 보여주기
+     */
+    private void showLaundrySearchList(View view) {
+
+        String URL = DatabaseInfo.showLaundrySearchURL;
+
+
+        StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Timber.d("showLaundrySearchList() - onResponse : " + response);
+                parseLaundrySearchList(view, response);
+            }
+        },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Timber.d("showLaundrySearchList() - onErrorResponse : " + error);
+                        return;
+                    }
+                });
+
+        request.setShouldCache(false);
+        requestQueue.add(request);
+    }
+
+    private void parseLaundrySearchList(View view, String response) {
+        laundryList = new ArrayList<>();
+
+        String loginUserID = MainActivity.getLoginUserID();
+
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = (JsonObject)jsonParser.parse(response);
+        JsonArray jsonSearch = (JsonArray)jsonObject.get("laundrySearch");
+
+        Timber.d("parseLaundrySearchList의 jsonSearch SIZE : " + jsonSearch.size());
+
+        for (int index=0; index<jsonSearch.size(); index++) {
+            JsonObject laundrySearch = (JsonObject)jsonSearch.get(index);
+            if (loginUserID.equals(laundrySearch.get("USER_ID").getAsString())) {
+
+                LaundrySearch search = new LaundrySearch(
+                        laundrySearch.get("USER_ID").getAsString(),
+                        laundrySearch.get("LAUNDRY_KEY").getAsInt(),
+                        laundrySearch.get("LAUNDRY_NM").getAsString(),
+                        laundrySearch.get("LAUNDRY_ADDR").getAsString(),
+                        laundrySearch.get("LAUNDRY_TEL").getAsString(),
+                        laundrySearch.get("UPD_DT").getAsString()
+                );
+                System.out.println(search.toString());
+                laundryList.add(search);
+            }
+        }
+
+        laundrySearchAdapter = new LaundrySearchAdapter(view.getContext(), laundryList);
+        search_recyclerView.setLayoutManager(new LinearLayoutManager(view.getContext()));
+        search_recyclerView.setAdapter(laundrySearchAdapter);
     }
 
     @Override

@@ -14,6 +14,8 @@ import com.w36495.everylaundry.R;
 
 import org.w3c.dom.Text;
 
+import timber.log.Timber;
+
 public class BoardPostHolder extends RecyclerView.ViewHolder {
 
     protected TextView postListCategory;
@@ -37,7 +39,6 @@ public class BoardPostHolder extends RecyclerView.ViewHolder {
             @Override
             public void onClick(View view) {
                 int position = getAbsoluteAdapterPosition();
-                Log.d("로그", "BoardPostHolder - postPosition : " + position);
                 postClickListener.onClickPost(view, position);
             }
         });

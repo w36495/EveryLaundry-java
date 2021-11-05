@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.w36495.everylaundry.BoardCategoryClickListener;
 import com.w36495.everylaundry.R;
 
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ public class BoardCategoryAdapter extends RecyclerView.Adapter<BoardCategoryHold
 
     private Context context;
     private ArrayList<String> categoryList;
+    private BoardCategoryClickListener boardCategoryClickListener;
 
     public BoardCategoryAdapter(Context context, ArrayList<String> categoryList) {
         this.context = context;
@@ -26,7 +28,7 @@ public class BoardCategoryAdapter extends RecyclerView.Adapter<BoardCategoryHold
     @Override
     public BoardCategoryHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_board_category_item, parent, false);
-        return new BoardCategoryHolder(view);
+        return new BoardCategoryHolder(view, boardCategoryClickListener);
     }
 
     @Override
@@ -38,4 +40,9 @@ public class BoardCategoryAdapter extends RecyclerView.Adapter<BoardCategoryHold
     public int getItemCount() {
         return categoryList.size();
     }
+
+    public void setOnBoardCategoryClicked(BoardCategoryClickListener boardCategoryClickListener) {
+        this.boardCategoryClickListener = boardCategoryClickListener;
+    }
+
 }

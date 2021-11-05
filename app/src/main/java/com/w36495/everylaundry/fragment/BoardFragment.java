@@ -26,6 +26,9 @@ import com.android.volley.toolbox.Volley;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.w36495.everylaundry.BoardCategoryClickListener;
+import com.w36495.everylaundry.MainActivity;
+import com.w36495.everylaundry.UpdatePostViewCount;
 import com.w36495.everylaundry.data.DatabaseInfo;
 import com.w36495.everylaundry.PostActivity;
 import com.w36495.everylaundry.PostAddActivity;
@@ -34,7 +37,9 @@ import com.w36495.everylaundry.data.Post;
 import com.w36495.everylaundry.R;
 import com.w36495.everylaundry.adapter.BoardCategoryAdapter;
 import com.w36495.everylaundry.adapter.BoardPostAdapter;
+import com.w36495.everylaundry.util.DateUtil;
 
+import java.io.DataInput;
 import java.util.ArrayList;
 
 import timber.log.Timber;
@@ -45,6 +50,7 @@ public class BoardFragment extends Fragment {
     private BoardCategoryAdapter categoryAdapter;
     private BoardPostAdapter postAdapter;
 
+
     private FloatingActionButton board_add_fab;
 
     private RequestQueue requestQueue;
@@ -52,6 +58,8 @@ public class BoardFragment extends Fragment {
     private int postKey = 0;
     public static ArrayList<String> categoryList;
     private ArrayList<Post> postList;
+
+    private String loginID = null;
 
     @Nullable
     @Override
@@ -75,6 +83,12 @@ public class BoardFragment extends Fragment {
         categoryRecyclerView = view.findViewById(R.id.board_category_recyclerView);
         postRecyclerView = view.findViewById(R.id.board_post_recyclerView);
         board_add_fab = view.findViewById(R.id.board_add_fab);
+
+        categoryList = new ArrayList<>();
+
+        // 세션
+        loginID = MainActivity.getLoginUserID();
+
 
         // 카테고리 //
         showBoardCategory(view);
@@ -124,8 +138,6 @@ public class BoardFragment extends Fragment {
      */
     private void parseBoardCategory(String response, View view, ArrayList<String> categoryList) {
 
-        categoryList = new ArrayList<>();
-
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = (JsonObject)jsonParser.parse(response);
         JsonArray jsonCategory = (JsonArray)jsonObject.get("board_category");
@@ -140,9 +152,32 @@ public class BoardFragment extends Fragment {
             categoryList.add(builder.toString());
         }
 
+
+
         categoryAdapter = new BoardCategoryAdapter(view.getContext(), categoryList);
         categoryRecyclerView.setLayoutManager(new LinearLayoutManager(view.getContext(), LinearLayoutManager.HORIZONTAL, false));
         categoryRecyclerView.setAdapter(categoryAdapter);
+
+//        categoryAdapter.setOnBoardCategoryClicked(new BoardCategoryClickListener() {
+//            @Override
+//            public void onBoardCategoryClicked(View view, int position) {
+//                Timber.d("카테고리 선택함");
+//            }
+//        });
+
+        System.out.println("카테고리 출력");
+        for (int i=0; i<categoryList.size(); i++) {
+            System.out.println(categoryList.get(i));
+        }
+
+
+        categoryAdapter.setOnBoardCategoryClicked(new BoardCategoryClickListener() {
+            @Override
+            public void onBoardCategoryClicked(View view, int position) {
+
+            }
+        });
+
     }
 
     /**
@@ -173,6 +208,7 @@ public class BoardFragment extends Fragment {
     }
 
     private void parseBoardPost(String response, View view) {
+
         postList = new ArrayList<>();
 
         JsonParser jsonParser = new JsonParser();
@@ -194,6 +230,9 @@ public class BoardFragment extends Fragment {
                 postCommentFlag = false;
             }
 
+            String registDate = DateUtil.parseDate(jsonOnePost.get("REG_DT").getAsString());
+            String updateDate = DateUtil.parseDate(jsonOnePost.get("UPD_DT").getAsString());
+
             Post post = new Post(
                     jsonOnePost.get("POST_KEY").getAsInt(),
                     jsonOnePost.get("USER_ID").getAsString(),
@@ -204,8 +243,8 @@ public class BoardFragment extends Fragment {
                     jsonOnePost.get("RECOMMENT_CNT").getAsInt(),
                     postNotice,
                     postCommentFlag,
-                    jsonOnePost.get("REG_DT").getAsString(),
-                    jsonOnePost.get("UPD_DT").getAsString()
+                    registDate,
+                    updateDate
             );
 
             postList.add(post);
@@ -215,7 +254,7 @@ public class BoardFragment extends Fragment {
             System.out.println(post.toString());
         }
 
-        postAdapter = new BoardPostAdapter(view.getContext(), postList, BoardFragment.categoryList);
+        postAdapter = new BoardPostAdapter(view.getContext(), postList, categoryList);
         postRecyclerView.setLayoutManager(new LinearLayoutManager(view.getContext()));
         postRecyclerView.setAdapter(postAdapter);
 
@@ -227,6 +266,13 @@ public class BoardFragment extends Fragment {
                 Timber.d("선택한 postKey : " + postList.get(position).getPostKey());
                 int postKey = postList.get(position).getPostKey();
                 int categoryKey = postList.get(position).getPostCategory();
+
+                // 조회수 업데이트
+                if (loginID.equals(postList.get(position).getPostWriter()) == false) {
+                    UpdatePostViewCount updatePostViewCount = new UpdatePostViewCount();
+                    updatePostViewCount.execute(DatabaseInfo.updatePostViewCountURL, String.valueOf(postKey));
+                }
+
                 String postWriter = postList.get(position).getPostWriter();
                 Intent intent = new Intent(view.getContext(), PostActivity.class);
                 intent.putExtra("postKey", postKey);

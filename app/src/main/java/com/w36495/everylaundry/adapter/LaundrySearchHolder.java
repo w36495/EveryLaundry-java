@@ -12,7 +12,6 @@ public class LaundrySearchHolder extends RecyclerView.ViewHolder {
 
     protected TextView search_distance;
     protected TextView search_name;
-    protected TextView search_zip_code;
     protected TextView search_address;
     protected TextView search_tel;
 
@@ -21,7 +20,6 @@ public class LaundrySearchHolder extends RecyclerView.ViewHolder {
 
         search_distance = itemView.findViewById(R.id.search_distance);
         search_name = itemView.findViewById(R.id.search_name);
-        search_zip_code = itemView.findViewById(R.id.search_zip_code);
         search_address = itemView.findViewById(R.id.search_address);
         search_tel = itemView.findViewById(R.id.search_tel);
     }

@@ -12,19 +12,18 @@ import java.net.URL;
 
 import timber.log.Timber;
 
-public class updateLaundryDetail extends AsyncTask<String, Void, String> {
+public class UpdatePostViewCount extends AsyncTask<String, Void, String> {
     @Override
     protected String doInBackground(String... strings) {
         if (BuildConfig.DEBUG) {
             Timber.plant(new Timber.DebugTree());
         }
 
-        String userID = (String) strings[1];
-        String laundryKey = (String) strings[2];
+        String postKey = (String) strings[1];
 
         String serverURL = (String) strings[0];
         // 홈페이지로 치면 주소창에 파라미터 넘어가듯
-        String postParameters = "userID=" + userID + "&laundryKey=" + laundryKey;
+        String postParameters = "postKey=" + postKey;
 
         StringBuilder stringBuilder = new StringBuilder();
 
@@ -47,13 +46,13 @@ public class updateLaundryDetail extends AsyncTask<String, Void, String> {
 
             InputStream inputStream;
             if (responseStatusCode == HttpURLConnection.HTTP_OK) {
-                Timber.d("updateLaundryDetail : HTTP_OK");
+                Timber.d("UpdatePostViewCount : HTTP_OK");
                 inputStream = httpURLConnection.getInputStream();
-                Timber.d("updateLaundryDetail - getInputStream() : " + inputStream);
+                Timber.d("UpdatePostViewCount - getInputStream() : " + inputStream);
             } else {
-                Timber.d("updateLaundryDetail : HTTP_FAIL");
+                Timber.d("UpdatePostViewCount : HTTP_FAIL");
                 inputStream = httpURLConnection.getErrorStream();
-                Timber.d("updateLaundryDetail - getErrorStream() : " + inputStream);
+                Timber.d("UpdatePostViewCount - getErrorStream() : " + inputStream);
             }
 
             InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "UTF-8");
@@ -68,10 +67,10 @@ public class updateLaundryDetail extends AsyncTask<String, Void, String> {
 
             bufferedReader.close();
 
-            Timber.d("updateLaundryDetail - stringBuilder : " + stringBuilder);
+            Timber.d("UpdatePostViewCount - stringBuilder : " + stringBuilder);
 
         } catch (IOException e) {
-            Timber.d("updateLaundryDetail : Error " + e.getMessage());
+            Timber.d("UpdatePostViewCount : Error " + e.getMessage());
             e.printStackTrace();
         }
         return stringBuilder.toString();

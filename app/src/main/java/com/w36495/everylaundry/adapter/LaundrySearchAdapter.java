@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.w36495.everylaundry.data.Laundry;
 import com.w36495.everylaundry.R;
+import com.w36495.everylaundry.data.LaundrySearch;
 
 import java.util.ArrayList;
 
@@ -19,9 +20,9 @@ import java.util.ArrayList;
 public class LaundrySearchAdapter extends RecyclerView.Adapter<LaundrySearchHolder> {
 
     private Context context;
-    private ArrayList<Laundry> laundryList;
+    private ArrayList<LaundrySearch> laundryList;
 
-    public LaundrySearchAdapter(Context context, ArrayList<Laundry> laundryList) {
+    public LaundrySearchAdapter(Context context, ArrayList<LaundrySearch> laundryList) {
         this.context = context;
         this.laundryList = laundryList;
     }
@@ -35,10 +36,9 @@ public class LaundrySearchAdapter extends RecyclerView.Adapter<LaundrySearchHold
 
     @Override
     public void onBindViewHolder(@NonNull LaundrySearchHolder holder, int position) {
-        holder.search_name.setText(laundryList.get(position).getLaundryName());
+        holder.search_name.setText(laundryList.get(position).getLaundryNM());
         holder.search_tel.setText(laundryList.get(position).getLaundryTel());
         holder.search_address.setText(laundryList.get(position).getLaundryAddress());
-        holder.search_zip_code.setText(laundryList.get(position).getLaundryZipCode());
     }
 
     @Override
