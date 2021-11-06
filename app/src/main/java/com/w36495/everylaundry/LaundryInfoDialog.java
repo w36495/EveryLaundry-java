@@ -45,12 +45,14 @@ public class LaundryInfoDialog extends BottomSheetDialog {
     private ArrayList<Review> resultReviewList;
     private RequestQueue requestQueue;
 
-    private String loginUserID = null;
+    private String loginID = null;
+    private boolean likeFlag = false;
 
-    public LaundryInfoDialog(@NonNull Context context, Laundry laundry) {
+    public LaundryInfoDialog(@NonNull Context context, Laundry laundry, boolean likeFlag) {
         super(context);
         this.context = context;
         this.laundry = laundry;
+        this.likeFlag = likeFlag;
     }
 
     @Override
@@ -79,6 +81,13 @@ public class LaundryInfoDialog extends BottomSheetDialog {
         map_tel = findViewById(R.id.map_tel);
         map_like_btn = findViewById(R.id.map_like_btn);
 
+        // 하트(즐겨찾기) 표시
+        if (likeFlag == true) {
+            map_like_btn.setImageResource(R.drawable.ic_baseline_favorite_24);
+        } else if (likeFlag == false) {
+            map_like_btn.setImageResource(R.drawable.ic_baseline_favorite_border_24);
+        }
+
         reviewReycyclerView = findViewById(R.id.review_recyclerView);
 
         Timber.d("title : " + laundry.getLaundryName());
@@ -89,10 +98,10 @@ public class LaundryInfoDialog extends BottomSheetDialog {
         map_address.setText(laundry.getLaundryAddress());
         map_tel.setText(laundry.getLaundryTel());
 
-        SharedPreferences sharedPreferences = context.getSharedPreferences("session", 0);
-        loginUserID = sharedPreferences.getString("userID", "");
+        loginID = MainActivity.getLoginUserID();
 
 
+        // DB에서 리뷰 불러오기
         String URL = DatabaseInfo.showLaundryReviewURL;
 
         StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
@@ -115,8 +124,20 @@ public class LaundryInfoDialog extends BottomSheetDialog {
         map_like_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // 하트(즐겨찾기) 표시
+                // LIKE_FLAG = 'Y'인 상태 -> LIKE_FLAG = 'N'로 변경
+                if (likeFlag == true) {
+                    likeFlag = false;
+                    map_like_btn.setImageResource(R.drawable.ic_baseline_favorite_border_24);
+                }
+                // LIKE_FLAG = 'N'인 상태 -> LIKE_FLAG = 'Y'로 변경
+                else {
+                    likeFlag = true;
+                    map_like_btn.setImageResource(R.drawable.ic_baseline_favorite_24);
+                }
+
                 UpdateLaundryDetail updateLaundryDetail = new UpdateLaundryDetail();
-                updateLaundryDetail.execute(DatabaseInfo.updateLaundryLikeURL, loginUserID, String.valueOf(laundry.getLaundryKey()));
+                updateLaundryDetail.execute(DatabaseInfo.updateLaundryLikeURL, loginID, String.valueOf(laundry.getLaundryKey()));
                 //todo : 사용자의 LIKE_FLAG에 맞춰 아이콘 변경
             }
         });

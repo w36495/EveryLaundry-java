@@ -1,5 +1,6 @@
 package com.w36495.everylaundry;
 
+import android.animation.TimeAnimator;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -7,6 +8,7 @@ import android.view.ViewGroup;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.BuildConfig;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -26,6 +28,8 @@ import net.daum.mf.map.api.MapPoint;
 import net.daum.mf.map.api.MapView;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -45,6 +49,7 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
 
     private ArrayList<Laundry> laundryList = new ArrayList<>();
     private int mapZoomLevel = 0;
+    private String loginID = null;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -63,6 +68,8 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
     }
 
     private void setInit() {
+
+        loginID = MainActivity.getLoginUserID();
 
         mapView = new MapView(this);
 
@@ -192,16 +199,51 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
         int mapKey = mapPOIItem.getTag();
         Laundry laundry = laundryList.get(mapKey);
 
-        // 하단에 세탁소 정보 다이얼로그 띄우기
-        LaundryInfoDialog dialog = new LaundryInfoDialog(LaundryMapActivity.this, laundry);
-        dialog.show();
-
         String laundryKey = String.valueOf(mapKey);
-        String loginID = MainActivity.getLoginUserID();
 
         // DB의 LAUNDRY_DEATIL에 삽입하기
         InsertLaundryLike insertLaundryLike = new InsertLaundryLike();
         insertLaundryLike.execute(DatabaseInfo.insertLaundryLikeURL, loginID, laundryKey);
+
+        // 좋아요(즐겨찾기)를 했는지 안했는지 얻기
+        String URL = DatabaseInfo.showLaundryLikeURL;
+        StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Timber.d("좋아요 뭐를 했니? : " + response);
+                JsonParser jsonParser = new JsonParser();
+                JsonObject jsonObject = (JsonObject) jsonParser.parse(response);
+                JsonArray jsonLike = (JsonArray) jsonObject.get("laundryLikeArray");
+                JsonObject like = (JsonObject) jsonLike.get(0);
+                boolean likeFlag = false;
+
+                if (like.get("LIKE_FLAG").getAsString().equals("Y")) {
+                    likeFlag = true;
+                }
+
+                // 하단에 세탁소 정보 다이얼로그 띄우기
+                LaundryInfoDialog dialog = new LaundryInfoDialog(LaundryMapActivity.this, laundry, likeFlag);
+                dialog.show();
+
+            }
+        },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Timber.d(error.getMessage());
+                    }
+                }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> params = new HashMap<>();
+                params.put("userID", loginID);
+                params.put("laundryKey", laundryKey);
+                return params;
+            }
+        };
+
+        request.setShouldCache(false);
+        requestQueue.add(request);
 
     }
 

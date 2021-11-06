@@ -82,7 +82,7 @@ public class LikeFragment extends Fragment {
      */
     private void showLaundryLikeList(View view) {
 
-        String URL = DatabaseInfo.showLaundryLikeURL;
+        String URL = DatabaseInfo.showLaundryLikeListURL;
 
 
         StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {

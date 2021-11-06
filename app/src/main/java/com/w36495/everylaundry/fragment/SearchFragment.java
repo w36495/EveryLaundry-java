@@ -92,7 +92,7 @@ public class SearchFragment extends Fragment {
     }
 
     /**
-     * 즐겨찾는 세탁소 목록 보여주기
+     * 최근 검색한 세탁소 목록 보여주기
      */
     private void showLaundrySearchList(View view) {
 
