@@ -26,6 +26,7 @@ import com.w36495.everylaundry.api.UpdateLaundryDetail;
 import com.w36495.everylaundry.data.DatabaseInfo;
 import com.w36495.everylaundry.data.Laundry;
 import com.w36495.everylaundry.data.Review;
+import com.w36495.everylaundry.util.DateUtil;
 
 import java.util.ArrayList;
 
@@ -138,7 +139,6 @@ public class LaundryInfoDialog extends BottomSheetDialog {
 
                 UpdateLaundryDetail updateLaundryDetail = new UpdateLaundryDetail();
                 updateLaundryDetail.execute(DatabaseInfo.updateLaundryLikeURL, loginID, String.valueOf(laundry.getLaundryKey()));
-                //todo : 사용자의 LIKE_FLAG에 맞춰 아이콘 변경
             }
         });
 
@@ -161,7 +161,7 @@ public class LaundryInfoDialog extends BottomSheetDialog {
             String reviewUserID = laundryReview.get("USER_ID").getAsString();
             int reviewLaundryKey = laundryReview.get("LAUNDRY_KEY").getAsInt();
             String reviewContents = laundryReview.get("RV_CONTENTS").getAsString();
-            String reviewRegistDate = laundryReview.get("REG_DT").getAsString();
+            String reviewRegistDate = DateUtil.parseDate(laundryReview.get("REG_DT").getAsString());
 
             if (reviewLaundryKey == laundry.getLaundryKey()) {
                 Review review = new Review(reviewKey, reviewUserID, reviewLaundryKey, reviewContents, reviewRegistDate);

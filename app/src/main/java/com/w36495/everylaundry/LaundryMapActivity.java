@@ -1,12 +1,23 @@
 package com.w36495.everylaundry;
 
+import android.Manifest;
 import android.animation.TimeAnimator;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.BuildConfig;
@@ -39,17 +50,22 @@ import timber.log.Timber;
 /**
  * 세탁소 맵 보여지는 액티비티
  */
-public class LaundryMapActivity extends AppCompatActivity implements MapView.POIItemEventListener {
+public class LaundryMapActivity extends AppCompatActivity implements MapView.POIItemEventListener, View.OnClickListener {
 
     private MapView mapView;
     private ViewGroup mapViewContainer;
-    private FloatingActionButton fab_zoomIn, fab_zoomOut;
+    private FloatingActionButton fab_zoomIn, fab_zoomOut, fab_gps;
+    private ImageButton map_view_back_btn;
+    private TextView map_view_app_name;
 
     private RequestQueue requestQueue;
 
     private ArrayList<Laundry> laundryList = new ArrayList<>();
     private int mapZoomLevel = 0;
     private String loginID = null;
+
+    private Double networkLatitude = 0.0;
+    private Double networkLongitude = 0.0;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -73,12 +89,19 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
 
         mapView = new MapView(this);
 
+        map_view_app_name = findViewById(R.id.map_view_app_name);
+        map_view_back_btn = findViewById(R.id.map_view_back_btn);
         fab_zoomIn = findViewById(R.id.fab_zoomIn);
         fab_zoomOut = findViewById(R.id.fab_zoomOut);
+        fab_gps = findViewById(R.id.fab_gps);
         mapViewContainer = (ViewGroup) findViewById(R.id.map_view);
         mapViewContainer.addView(mapView);
 
         mapView.setPOIItemEventListener(this);
+
+        // 처음 지도 켰을때 현재 위치로 지정
+        getGps();
+        mapView.setMapCenterPoint(MapPoint.mapPointWithGeoCoord(networkLatitude, networkLongitude), true);
 
         // 줌 레벨 설정
         mapView.setZoomLevel(4, true);
@@ -88,21 +111,13 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
         // 줌 아웃
         mapView.zoomOut(true);
 
-
         // 줌 변경 버튼
-        fab_zoomIn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setZoomInOut(true);
-            }
-        });
-
-        fab_zoomOut.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setZoomInOut(false);
-            }
-        });
+        fab_zoomIn.setOnClickListener(this);
+        fab_zoomOut.setOnClickListener(this);
+        // GPS 버튼
+        fab_gps.setOnClickListener(this);
+        map_view_app_name.setOnClickListener(this);
+        map_view_back_btn.setOnClickListener(this);
 
         String URL = DatabaseInfo.showLaundryURL;
 
@@ -134,8 +149,7 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
         int zoomLevel = mapView.getZoomLevel();
         if (isZoomIn == true) {
             mapView.setZoomLevel(--zoomLevel, true);
-        }
-        else {
+        } else {
             mapView.setZoomLevel(++zoomLevel, true);
         }
     }
@@ -262,5 +276,77 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
 
     }
 
+    /**
+     * GPS
+     */
+    private void getGps() {
 
+        boolean isGPSEnabled = false;
+        boolean isNetworkEnabled = false;
+
+        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+        // GPS 프로바이더 사용가능여부
+        isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        // 네트워크 프로바이더 사용가능여부
+        isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+
+        Timber.d("GPS 프로바이더 사용가능 ? : " + isGPSEnabled);
+        Timber.d("네트워크 프로바이더 사용가능? : " + isNetworkEnabled);
+
+        //TODO: GPS 안켜져있으면 위치 서비스로 이동 => 나중에 팝업창으로 안내문구 띄우기
+        if (isGPSEnabled == false) {
+            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            startActivity(intent);
+        }
+
+        // 퍼미션 체크
+        if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+//        Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+//
+        Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+        if (location != null) {
+            // latitude : 위도, longitude : 경도
+            networkLatitude = location.getLatitude();
+            networkLongitude = location.getLongitude();
+            Timber.d("위도 : " + networkLatitude + " 경도 : " + networkLongitude);
+        } else {
+            Timber.d("location 없음");
+        }
+
+    }
+
+    @Override
+    public void onClick(View view) {
+        Intent intent;
+        switch (view.getId()) {
+            case R.id.fab_zoomIn:
+                setZoomInOut(true);
+                break;
+            case R.id.fab_zoomOut:
+                setZoomInOut(false);
+                break;
+            case R.id.fab_gps:
+                getGps();
+                mapView.setMapCenterPoint(MapPoint.mapPointWithGeoCoord(networkLatitude, networkLongitude), true);
+                break;
+            case R.id.map_view_app_name:
+            case R.id.map_view_back_btn:
+                intent = new Intent(LaundryMapActivity.this, MainActivity.class);
+                startActivity(intent);
+                break;
+        }
+    }
 }
