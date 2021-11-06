@@ -58,11 +58,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void setInit() {
 
-        SharedPreferences sharedPreferences = getSharedPreferences("session", 0);
-        String userID = sharedPreferences.getString("userID", "");
-        String userSession = sharedPreferences.getString("session", "");
-
-
         searchFragment = new SearchFragment();
         likeFragment = new LikeFragment();
         boardFragment = new BoardFragment();
@@ -97,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
 
         // 게시물 추가했을 때 화면이동시키기
         Intent intent = getIntent();
-        if (intent.hasExtra("PostAddActivity")) {
+        if (intent.hasExtra("PostAddActivity") || intent.hasExtra("PostActivity")) {
             getSupportFragmentManager().beginTransaction().replace(R.id.main_frameLayout, boardFragment).commit();
             Timber.d("BoardFragment() 호출");
         }

@@ -3,6 +3,7 @@ package com.w36495.everylaundry.fragment;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.JsonReader;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,8 +12,10 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.android.volley.BuildConfig;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -23,10 +26,13 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.w36495.everylaundry.BoardCategoryClickListener;
+import com.w36495.everylaundry.InsertPostRecommend;
 import com.w36495.everylaundry.MainActivity;
 import com.w36495.everylaundry.UpdatePostViewCount;
 import com.w36495.everylaundry.data.DatabaseInfo;
@@ -50,7 +56,7 @@ public class BoardFragment extends Fragment {
     private BoardCategoryAdapter categoryAdapter;
     private BoardPostAdapter postAdapter;
 
-
+    private SwipeRefreshLayout boardSwipeLayout;
     private FloatingActionButton board_add_fab;
 
     private RequestQueue requestQueue;
@@ -83,6 +89,17 @@ public class BoardFragment extends Fragment {
         categoryRecyclerView = view.findViewById(R.id.board_category_recyclerView);
         postRecyclerView = view.findViewById(R.id.board_post_recyclerView);
         board_add_fab = view.findViewById(R.id.board_add_fab);
+        boardSwipeLayout = view.findViewById(R.id.board_swipeLayout);
+
+        // 게시물 새로고침
+        boardSwipeLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+                fragmentTransaction.detach(BoardFragment.this).attach(BoardFragment.this).commit();
+                boardSwipeLayout.setRefreshing(false);
+            }
+        });
 
         categoryList = new ArrayList<>();
 
@@ -191,7 +208,6 @@ public class BoardFragment extends Fragment {
             @Override
             public void onResponse(String response) {
                 Timber.d("showBoardPost() - onResponse : " + response);
-                //parseBoardPost(response, view, postList);
                 parseBoardPost(response, view);
             }
         },
@@ -212,8 +228,8 @@ public class BoardFragment extends Fragment {
         postList = new ArrayList<>();
 
         JsonParser jsonParser = new JsonParser();
-        JsonObject jsonObject = (JsonObject)jsonParser.parse(response);
-        JsonArray jsonPost = (JsonArray)jsonObject.get("posts");
+        JsonObject jsonObject = (JsonObject) jsonParser.parse(response);
+        JsonArray jsonPost = (JsonArray) jsonObject.get("posts");
 
         postKey = jsonPost.size();
 
@@ -264,19 +280,55 @@ public class BoardFragment extends Fragment {
             public void onClickPost(View view, int position) {
                 Timber.d("postPosition : " + position);
                 Timber.d("선택한 postKey : " + postList.get(position).getPostKey());
-                int postKey = postList.get(position).getPostKey();
-                int categoryKey = postList.get(position).getPostCategory();
+                int choicePostKey = postList.get(position).getPostKey();
+                int choiceCategoryKey = postList.get(position).getPostCategory();
+                String postWriter = postList.get(position).getPostWriter();
 
-                // 조회수 업데이트
+                // Recommend Setting
+                InsertPostRecommend insertPostRecommend = new InsertPostRecommend();
+                insertPostRecommend.execute(DatabaseInfo.insertPostRecommendURL, loginID, String.valueOf(choicePostKey));
+
+                // 게시물 작성자 != 로그인 사용자 => 조회수 업데이트/따봉 표시
                 if (loginID.equals(postList.get(position).getPostWriter()) == false) {
                     UpdatePostViewCount updatePostViewCount = new UpdatePostViewCount();
                     updatePostViewCount.execute(DatabaseInfo.updatePostViewCountURL, String.valueOf(postKey));
+
+                    String URL = DatabaseInfo.showPostRecommendURL;
+
+                    StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            Timber.d("추천 결과 : " + isPostRecommend(response, choicePostKey));
+                            // 추천 누른 경우
+                            boolean isRecommend = isPostRecommend(response, choicePostKey);
+                            if (isRecommend == true) {
+                                Intent intent = new Intent(view.getContext(), PostActivity.class);
+                                intent.putExtra("postKey", choicePostKey);
+                                intent.putExtra("categoryKey", choiceCategoryKey);
+                                intent.putExtra("postWriter", postWriter);
+                                intent.putExtra("postRecommend", isRecommend);
+                                startActivity(intent);
+                            }
+                            // 추천을 누르지 않은 경우
+                            else {
+
+                            }
+                        }
+                    },
+                            new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+
+                                }
+                            });
+                            request.setShouldCache(false);
+                    requestQueue.add(request);
                 }
 
-                String postWriter = postList.get(position).getPostWriter();
+
                 Intent intent = new Intent(view.getContext(), PostActivity.class);
-                intent.putExtra("postKey", postKey);
-                intent.putExtra("categoryKey", categoryKey);
+                intent.putExtra("postKey", choicePostKey);
+                intent.putExtra("categoryKey", choiceCategoryKey);
                 intent.putExtra("postWriter", postWriter);
                 startActivity(intent);
             }
@@ -286,4 +338,34 @@ public class BoardFragment extends Fragment {
 
     }
 
+    private boolean isPostRecommend(String response, int choicePostKey) {
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = (JsonObject)jsonParser.parse(response);
+        JsonArray jsonRecommend = (JsonArray)jsonObject.get("postRecommend");
+
+        boolean recommendCheck = false;
+
+        Timber.d("jsonRecommend 사이즈 : " + jsonRecommend.size());
+        for (int index=0; index<jsonRecommend.size(); index++) {
+            JsonObject recommend = (JsonObject) jsonRecommend.get(index);
+
+            // 같은 게시물이고
+            if (choicePostKey == recommend.get("POST_KEY").getAsInt()) {
+                // 아이디가 다르면
+                if (loginID.equals(recommend.get("USER_ID").getAsString())) {
+                    // 추천버튼 누르지 않은 경우
+                    if (recommend.get("RECOMMEND_FLAG").getAsString().equals("Y")) {
+                        Timber.d("추천 버튼 : Y");
+                        recommendCheck = true;
+                    }
+                    // 추천버튼 누른 경우
+                    else {
+                        Timber.d("추천 버튼 : N");
+                        recommendCheck = false;
+                    }
+                }
+            }
+        }
+        return recommendCheck;
+    }
 }

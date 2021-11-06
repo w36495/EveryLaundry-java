@@ -1,9 +1,9 @@
 package com.w36495.everylaundry;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -15,6 +15,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -25,15 +26,11 @@ import com.android.volley.toolbox.Volley;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.w36495.everylaundry.adapter.BoardCategoryAdapter;
 import com.w36495.everylaundry.adapter.BoardCommentAdapter;
 import com.w36495.everylaundry.data.Comment;
 import com.w36495.everylaundry.data.DatabaseInfo;
+import com.w36495.everylaundry.fragment.BoardFragment;
 import com.w36495.everylaundry.util.DateUtil;
-
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
 
@@ -46,13 +43,15 @@ public class PostActivity extends AppCompatActivity {
 
     private RecyclerView commentRecyclerView;
     private BoardCommentAdapter commentAdapter;
+    private BoardFragment boardFragment;
 
     private ArrayList<Comment> commentList;
 
-    private TextView post_title, post_writer, post_regist_date, post_view_count, post_recommend_count, post_contents;
+    private TextView post_app_name, post_title, post_writer, post_regist_date, post_view_count, post_recommend_count, post_contents;
     private EditText post_comment;
     private Button post_comment_btn;
-    private ImageButton post_update_btn, post_back_btn;
+    private ImageButton post_update_btn, post_back_btn, post_delete_btn;
+    private SwipeRefreshLayout commentSwipeLayout;
 
     private RequestQueue requestQueue;
 
@@ -62,6 +61,7 @@ public class PostActivity extends AppCompatActivity {
     private String postWriter = null;
     private String loginID = null;
     private String loginNickNM = null;
+    private boolean isRecommend = false;
     private boolean userFlag = true;    // 작성자 == 로그인한사람 : true, 작성자 != 로그인한사람 : false;
 
 
@@ -84,6 +84,7 @@ public class PostActivity extends AppCompatActivity {
 
     private void setInit() {
 
+        post_app_name = findViewById(R.id.post_app_name);
         post_title = findViewById(R.id.post_title);
         post_writer = findViewById(R.id.post_writer);
         post_regist_date = findViewById(R.id.post_regist_date);
@@ -94,8 +95,10 @@ public class PostActivity extends AppCompatActivity {
         post_comment_btn = findViewById(R.id.post_comment_btn);
         post_back_btn = findViewById(R.id.post_back_btn);
         post_update_btn = findViewById(R.id.post_update_btn);
+        post_delete_btn = findViewById(R.id.post_delete_btn);
         post_comment = findViewById(R.id.post_comment);
         post_comment_btn = findViewById(R.id.post_comment_btn);
+        commentSwipeLayout = findViewById(R.id.comment_swipeLayout);
 
         // 댓글 리싸이클러뷰
         commentRecyclerView = findViewById(R.id.post_comment_recyclerView);
@@ -108,6 +111,7 @@ public class PostActivity extends AppCompatActivity {
             postKey = intent.getIntExtra("postKey", -2);
             categoryKey = intent.getIntExtra("categoryKey", -2);
             postWriter = intent.getStringExtra("postWriter");
+            isRecommend = intent.getBooleanExtra("postRecommend", false);
         }
 
         Timber.d("선택된 게시물 postKey : " + postKey);
@@ -118,10 +122,16 @@ public class PostActivity extends AppCompatActivity {
         loginID = MainActivity.getLoginUserID();
         loginNickNM = MainActivity.getLoginUserNickNM();
 
-        // 작성자 != 로그인 한 사람이면 수정버튼 대신 따봉(추천)버튼 보이기
+        // 작성자 != 로그인 한 사람이면 수정버튼 대신 따봉(추천)버튼 보이기, 삭제 버튼 없애기
         if (!loginID.equals(postWriter)) {
             userFlag = false;
-            post_update_btn.setImageResource(R.drawable.ic_baseline_thumb_up_off_alt_24);
+            Timber.d("넘어온 추천 : " + isRecommend);
+            if (isRecommend == true) {
+                post_update_btn.setImageResource(R.drawable.ic_baseline_thumb_up_alt_24);
+            } else {
+                post_update_btn.setImageResource(R.drawable.ic_baseline_thumb_up_off_alt_24);
+            }
+            post_delete_btn.setVisibility(View.INVISIBLE);
         }
 
         // 게시물 수정 버튼
@@ -146,10 +156,57 @@ public class PostActivity extends AppCompatActivity {
                 }
 
                 else {
-                    // todo: 좋아요(따봉)수 연결하기
-                    Toast.makeText(getApplicationContext(), "준비중입니다.", Toast.LENGTH_SHORT).show();
+                    // 추천을 누른 상태라면 -> 추천 해제
+                    if (isRecommend == true) {
+                        Toast.makeText(getApplicationContext(), "추천을 취소하였습니다.", Toast.LENGTH_SHORT).show();
+                        isRecommend = false;
+                        // 색이 비어있는 추천 이미지 변경
+                        post_update_btn.setImageResource(R.drawable.ic_baseline_thumb_up_off_alt_24);
+                    }
+                    // 추천을 누르지 않은 상태라면 -> 추천
+                    else {
+                        Toast.makeText(getApplicationContext(), "추천하였습니다.", Toast.LENGTH_SHORT).show();
+                        isRecommend = true;
+                        // 색이 꽉 차있는 추천 이미지로 변경
+                        post_update_btn.setImageResource(R.drawable.ic_baseline_thumb_up_alt_24);
+                    }
+                    UpdatePostRecommend updatePostRecommend = new UpdatePostRecommend();
+                    updatePostRecommend.execute(DatabaseInfo.updatePostRecommendURL, loginID, String.valueOf(postKey));
                 }
 
+            }
+        });
+
+        /**
+         * 앱 이름 클릭 -> 메인 화면(검색)으로 이동
+         */
+        post_app_name.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent1 = new Intent(getApplicationContext(), MainActivity.class);
+                startActivity(intent1);
+            }
+        });
+
+        /**
+         * 게시물 삭제 버튼
+         */
+        post_delete_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showDeletePostDialog();
+            }
+        });
+
+        /**
+         * 뒤로가기 버튼(글 조회 -> 글 목록)
+         */
+        post_back_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent1 = new Intent(getApplicationContext(), MainActivity.class);
+                intent1.putExtra("PostActivity", "PostActivity");
+                startActivity(intent1);
             }
         });
 
@@ -173,6 +230,47 @@ public class PostActivity extends AppCompatActivity {
                 post_comment.setText("");
             }
         });
+
+        // todo: 댓글 스와이프(새로고침)
+        commentSwipeLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                commentAdapter.notifyDataSetChanged();
+                commentSwipeLayout.setRefreshing(false);
+            }
+        });
+
+    }
+
+    private void showDeletePostDialog() {
+        boardFragment = new BoardFragment();
+
+        AlertDialog.Builder deleteDialogBuilder = new AlertDialog.Builder(PostActivity.this)
+                .setIcon(R.drawable.ic_baseline_error_outline_24)
+                .setTitle("게시물 삭제")
+                .setMessage("게시물을 삭제하시겠습니까?")
+                .setPositiveButton("삭제", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Timber.d("게시물 삭제 버튼 클릭");
+                        DeletePost deletePost = new DeletePost();
+                        deletePost.execute(DatabaseInfo.deletePost, loginID, String.valueOf(postKey));
+                        Toast.makeText(getApplicationContext(), "게시물이 삭제되었습니다.", Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                        intent.putExtra("PostActivity", "PostActivity");
+                        startActivity(intent);
+                    }
+                })
+                .setNegativeButton("취소", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Timber.d("게시물 취소 버튼 클릭");
+                    }
+                });
+
+        AlertDialog deleteDialog = deleteDialogBuilder.create();
+        deleteDialog.show();
+
     }
 
     /**

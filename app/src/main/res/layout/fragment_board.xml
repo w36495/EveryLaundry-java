@@ -29,16 +29,24 @@
             app:layout_constraintTop_toBottomOf="@id/board_title"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/board_post_recyclerView"/>
+            app:layout_constraintBottom_toTopOf="@id/board_swipeLayout"/>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/board_post_recyclerView"
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/board_swipeLayout"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             app:layout_constraintTop_toBottomOf="@id/board_category_recyclerView"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/board_post_recyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"                  />
+
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/board_add_fab"
