@@ -1,13 +1,12 @@
 package com.w36495.everylaundry.fragment;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.JsonReader;
-import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -26,15 +25,13 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.w36495.everylaundry.BoardCategoryClickListener;
-import com.w36495.everylaundry.InsertPostRecommend;
+import com.w36495.everylaundry.api.InsertPostRecommend;
 import com.w36495.everylaundry.MainActivity;
-import com.w36495.everylaundry.UpdatePostViewCount;
+import com.w36495.everylaundry.api.UpdatePostViewCount;
 import com.w36495.everylaundry.data.DatabaseInfo;
 import com.w36495.everylaundry.PostActivity;
 import com.w36495.everylaundry.PostAddActivity;
@@ -45,7 +42,6 @@ import com.w36495.everylaundry.adapter.BoardCategoryAdapter;
 import com.w36495.everylaundry.adapter.BoardPostAdapter;
 import com.w36495.everylaundry.util.DateUtil;
 
-import java.io.DataInput;
 import java.util.ArrayList;
 
 import timber.log.Timber;
@@ -61,11 +57,13 @@ public class BoardFragment extends Fragment {
 
     private RequestQueue requestQueue;
 
-    private int postKey = 0;
+    private int lastPostKey = -1;   // 마지막 게시물 키
     public static ArrayList<String> categoryList;
     private ArrayList<Post> postList;
 
     private String loginID = null;
+
+    private BoardCategoryClickListener boardCategoryClickListener;
 
     @Nullable
     @Override
@@ -119,10 +117,12 @@ public class BoardFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(view.getContext(), PostAddActivity.class);
-                intent.putExtra("postKey", postKey);
+                intent.putExtra("postKey", lastPostKey);
                 startActivity(intent);
             }
         });
+
+
     }
 
     /**
@@ -162,39 +162,24 @@ public class BoardFragment extends Fragment {
         for (int index=0; index<jsonCategory.size(); index++) {
             JsonObject category = (JsonObject)jsonCategory.get(index);
 
-            // # + 카테고리
+            // #카테고리
             StringBuilder builder = new StringBuilder();
             builder.append("#").append(category.get("CATEGORY_TITLE").getAsString());
 
             categoryList.add(builder.toString());
         }
 
-
-
         categoryAdapter = new BoardCategoryAdapter(view.getContext(), categoryList);
         categoryRecyclerView.setLayoutManager(new LinearLayoutManager(view.getContext(), LinearLayoutManager.HORIZONTAL, false));
         categoryRecyclerView.setAdapter(categoryAdapter);
-
-//        categoryAdapter.setOnBoardCategoryClicked(new BoardCategoryClickListener() {
-//            @Override
-//            public void onBoardCategoryClicked(View view, int position) {
-//                Timber.d("카테고리 선택함");
-//            }
-//        });
-
-        System.out.println("카테고리 출력");
-        for (int i=0; i<categoryList.size(); i++) {
-            System.out.println(categoryList.get(i));
-        }
 
 
         categoryAdapter.setOnBoardCategoryClicked(new BoardCategoryClickListener() {
             @Override
             public void onBoardCategoryClicked(View view, int position) {
-
+                Toast.makeText(getActivity(), "선택한 카테고리 : " + position, Toast.LENGTH_SHORT).show();
             }
         });
-
     }
 
     /**
@@ -231,8 +216,6 @@ public class BoardFragment extends Fragment {
         JsonObject jsonObject = (JsonObject) jsonParser.parse(response);
         JsonArray jsonPost = (JsonArray) jsonObject.get("posts");
 
-        postKey = jsonPost.size();
-
         for (int index=0; index<jsonPost.size(); index++) {
             JsonObject jsonOnePost = (JsonObject)jsonPost.get(index);
 
@@ -263,26 +246,48 @@ public class BoardFragment extends Fragment {
                     updateDate
             );
 
+            if (lastPostKey < jsonOnePost.get("POST_KEY").getAsInt()) {
+                lastPostKey = jsonOnePost.get("POST_KEY").getAsInt();
+            }
+
             postList.add(post);
         }
 
-        for (Post post : postList) {
-            System.out.println(post.toString());
-        }
+        Timber.d("마지막 게시물 키 : " + lastPostKey);
 
         postAdapter = new BoardPostAdapter(view.getContext(), postList, categoryList);
         postRecyclerView.setLayoutManager(new LinearLayoutManager(view.getContext()));
         postRecyclerView.setAdapter(postAdapter);
+
+        postRecyclerView.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
+            @Override
+            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
+                return false;
+            }
+
+            @Override
+            public void onTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
+                Toast.makeText(view.getContext(), "터치", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+
+            }
+        });
 
         // 게시물 클릭했을 때의 이벤트 리스너
         postAdapter.setOnPostClickListener(new PostClickListener() {
             @Override
             public void onClickPost(View view, int position) {
                 Timber.d("postPosition : " + position);
-                Timber.d("선택한 postKey : " + postList.get(position).getPostKey());
+
                 int choicePostKey = postList.get(position).getPostKey();
-                int choiceCategoryKey = postList.get(position).getPostCategory();
-                String postWriter = postList.get(position).getPostWriter();
+                int choicePostCategoryKey = postList.get(position).getPostCategory();
+                String choicePostWriter = postList.get(position).getPostWriter();
+                Timber.d("선택한 게시물의 키 : " + choicePostKey);
+                Timber.d("선택한 게시물의 카테고리 : " + choicePostCategoryKey);
+                Timber.d("선택한 게시물의 작성자 : " + choicePostWriter);
 
                 // Recommend Setting
                 InsertPostRecommend insertPostRecommend = new InsertPostRecommend();
@@ -291,7 +296,7 @@ public class BoardFragment extends Fragment {
                 // 게시물 작성자 != 로그인 사용자 => 조회수 업데이트/따봉 표시
                 if (loginID.equals(postList.get(position).getPostWriter()) == false) {
                     UpdatePostViewCount updatePostViewCount = new UpdatePostViewCount();
-                    updatePostViewCount.execute(DatabaseInfo.updatePostViewCountURL, String.valueOf(postKey));
+                    updatePostViewCount.execute(DatabaseInfo.updatePostViewCountURL, String.valueOf(choicePostKey));
 
                     String URL = DatabaseInfo.showPostRecommendURL;
 
@@ -303,9 +308,9 @@ public class BoardFragment extends Fragment {
                             boolean isRecommend = isPostRecommend(response, choicePostKey);
                             if (isRecommend == true) {
                                 Intent intent = new Intent(view.getContext(), PostActivity.class);
-                                intent.putExtra("postKey", choicePostKey);
-                                intent.putExtra("categoryKey", choiceCategoryKey);
-                                intent.putExtra("postWriter", postWriter);
+                                intent.putExtra("choicePostKey", choicePostKey);
+                                intent.putExtra("choiceCategoryKey", choicePostCategoryKey);
+                                intent.putExtra("postWriter", choicePostWriter);
                                 intent.putExtra("postRecommend", isRecommend);
                                 startActivity(intent);
                             }
@@ -327,14 +332,12 @@ public class BoardFragment extends Fragment {
 
 
                 Intent intent = new Intent(view.getContext(), PostActivity.class);
-                intent.putExtra("postKey", choicePostKey);
-                intent.putExtra("categoryKey", choiceCategoryKey);
-                intent.putExtra("postWriter", postWriter);
+                intent.putExtra("choicePostKey", choicePostKey);
+                intent.putExtra("choicePostCategoryKey", choicePostCategoryKey);
+                intent.putExtra("choicePostWriter", choicePostWriter);
                 startActivity(intent);
             }
         });
-
-        Timber.d("글 마지막 번호 : " + postKey);
 
     }
 

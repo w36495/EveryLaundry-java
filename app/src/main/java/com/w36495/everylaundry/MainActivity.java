@@ -96,6 +96,12 @@ public class MainActivity extends AppCompatActivity {
             getSupportFragmentManager().beginTransaction().replace(R.id.main_frameLayout, boardFragment).commit();
             Timber.d("BoardFragment() 호출");
         }
+        if (intent.hasExtra("SettingUpdateActivity")) {
+            getSupportFragmentManager().beginTransaction().replace(R.id.main_frameLayout, settingFragment).commit();
+            Timber.d("SettingFragment() 호출");
+        }
+
+
     }
 
     /**

@@ -37,8 +37,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentHolder
     @Override
     public void onBindViewHolder(@NonNull BoardCommentHolder holder, int position) {
         // 댓글작성자와 글 작성자가 일치하지 않으면 공백
-        if (!postWriter.equals(commentList.get(position).getUserID())) {
-
+        if (postWriter.equals(commentList.get(position).getUserID()) == false) {
             holder.comment_flag.setText("");
         }
         // 일치하면 "작성자" 표시

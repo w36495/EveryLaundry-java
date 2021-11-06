@@ -1,7 +1,5 @@
 package com.w36495.everylaundry;
 
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +17,7 @@ import com.android.volley.toolbox.Volley;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.w36495.everylaundry.api.InsertLaundryLike;
 import com.w36495.everylaundry.data.DatabaseInfo;
 import com.w36495.everylaundry.data.Laundry;
 

@@ -32,6 +32,8 @@
         <activity android:name=".PostActivity"/>
         <activity android:name=".PostAddActivity"/>
         <activity android:name=".LaundryMapActivity" />
+        <activity android:name=".SettingUpdateActivity" />
+        <activity android:name=".SettingPostListActivity" />
 
         <meta-data
             android:name="com.kakao.sdk.AppKey"

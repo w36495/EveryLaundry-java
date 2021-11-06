@@ -1,6 +1,8 @@
-package com.w36495.everylaundry;
+package com.w36495.everylaundry.api;
 
 import android.os.AsyncTask;
+
+import com.w36495.everylaundry.BuildConfig;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,19 +14,19 @@ import java.net.URL;
 
 import timber.log.Timber;
 
-public class UpdateLaundryDetail extends AsyncTask<String, Void, String> {
+public class CheckLogin extends AsyncTask<String, Void, String> {
     @Override
     protected String doInBackground(String... strings) {
+
         if (BuildConfig.DEBUG) {
             Timber.plant(new Timber.DebugTree());
         }
 
-        String userID = (String) strings[1];
-        String laundryKey = (String) strings[2];
+        String userSession = (String) strings[1];
 
         String serverURL = (String) strings[0];
         // 홈페이지로 치면 주소창에 파라미터 넘어가듯
-        String postParameters = "userID=" + userID + "&laundryKey=" + laundryKey;
+        String postParameters = "userSession=" + userSession;
 
         StringBuilder stringBuilder = new StringBuilder();
 
@@ -47,13 +49,13 @@ public class UpdateLaundryDetail extends AsyncTask<String, Void, String> {
 
             InputStream inputStream;
             if (responseStatusCode == HttpURLConnection.HTTP_OK) {
-                Timber.d("updateLaundryDetail : HTTP_OK");
+                Timber.d("InsertPost : HTTP_OK");
                 inputStream = httpURLConnection.getInputStream();
-                Timber.d("updateLaundryDetail - getInputStream() : " + inputStream);
+                Timber.d("InsertPost - getInputStream() : " + inputStream);
             } else {
-                Timber.d("updateLaundryDetail : HTTP_FAIL");
+                Timber.d("InsertPost : HTTP_FAIL");
                 inputStream = httpURLConnection.getErrorStream();
-                Timber.d("updateLaundryDetail - getErrorStream() : " + inputStream);
+                Timber.d("InsertPost - getErrorStream() : " + inputStream);
             }
 
             InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "UTF-8");
@@ -68,10 +70,10 @@ public class UpdateLaundryDetail extends AsyncTask<String, Void, String> {
 
             bufferedReader.close();
 
-            Timber.d("updateLaundryDetail - stringBuilder : " + stringBuilder);
+            Timber.d("InsertPost - stringBuilder : " + stringBuilder);
 
         } catch (IOException e) {
-            Timber.d("updateLaundryDetail : Error " + e.getMessage());
+            Timber.d("InsertPost : Error " + e.getMessage());
             e.printStackTrace();
         }
         return stringBuilder.toString();

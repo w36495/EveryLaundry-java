@@ -1,6 +1,8 @@
-package com.w36495.everylaundry;
+package com.w36495.everylaundry.api;
 
 import android.os.AsyncTask;
+
+import com.w36495.everylaundry.BuildConfig;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,7 +14,7 @@ import java.net.URL;
 
 import timber.log.Timber;
 
-public class InsertPostRecommend extends AsyncTask<String, Void, String> {
+public class DeletePost extends AsyncTask<String, Void, String> {
     @Override
     protected String doInBackground(String... strings) {
         if (BuildConfig.DEBUG) {
@@ -47,13 +49,13 @@ public class InsertPostRecommend extends AsyncTask<String, Void, String> {
 
             InputStream inputStream;
             if (responseStatusCode == HttpURLConnection.HTTP_OK) {
-                Timber.d("InsertPostRecommend : HTTP_OK");
+                Timber.d("DeletePost : HTTP_OK");
                 inputStream = httpURLConnection.getInputStream();
-                Timber.d("InsertPostRecommend - getInputStream() : " + inputStream);
+                Timber.d("DeletePost - getInputStream() : " + inputStream);
             } else {
-                Timber.d("InsertPostRecommend : HTTP_FAIL");
+                Timber.d("DeletePost : HTTP_FAIL");
                 inputStream = httpURLConnection.getErrorStream();
-                Timber.d("InsertPostRecommend - getErrorStream() : " + inputStream);
+                Timber.d("DeletePost - getErrorStream() : " + inputStream);
             }
 
             InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "UTF-8");
@@ -68,10 +70,10 @@ public class InsertPostRecommend extends AsyncTask<String, Void, String> {
 
             bufferedReader.close();
 
-            Timber.d("InsertPostRecommend - stringBuilder : " + stringBuilder);
+            Timber.d("DeletePost - stringBuilder : " + stringBuilder);
 
         } catch (IOException e) {
-            Timber.d("InsertPostRecommend : Error " + e.getMessage());
+            Timber.d("DeletePost : Error " + e.getMessage());
             e.printStackTrace();
         }
         return stringBuilder.toString();

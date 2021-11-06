@@ -79,7 +79,7 @@
         android:layout_height="wrap_content"
         android:text=" 작성 리뷰 목록"
         android:textColor="@color/textColor"
-        android:drawableLeft="@drawable/baseline_thumb_up_24"
+        android:drawableLeft="@drawable/baseline_edit_note_24"
         android:textAlignment="textStart"
         android:textSize="16sp"
         android:background="@drawable/btn_ract_gray"

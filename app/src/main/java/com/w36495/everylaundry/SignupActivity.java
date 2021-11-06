@@ -10,6 +10,7 @@ import android.widget.EditText;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.w36495.everylaundry.api.InsertUser;
 import com.w36495.everylaundry.data.DatabaseInfo;
 
 public class SignupActivity extends AppCompatActivity {

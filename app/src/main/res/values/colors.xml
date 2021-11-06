@@ -10,5 +10,6 @@
 
     <color name="backgroundColor">#EEEEEE</color>
     <color name="textColor">#121212</color>
+    <color name="grayTextColor">#707070</color>
     <color name="opacity">#00ffffff</color>
 </resources>

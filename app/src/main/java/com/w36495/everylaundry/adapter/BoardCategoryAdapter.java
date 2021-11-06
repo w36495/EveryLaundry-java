@@ -34,6 +34,7 @@ public class BoardCategoryAdapter extends RecyclerView.Adapter<BoardCategoryHold
     @Override
     public void onBindViewHolder(@NonNull BoardCategoryHolder holder, int position) {
         holder.board_category.setText(categoryList.get(position));
+
     }
 
     @Override

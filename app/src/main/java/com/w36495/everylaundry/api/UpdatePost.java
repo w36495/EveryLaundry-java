@@ -1,6 +1,8 @@
-package com.w36495.everylaundry;
+package com.w36495.everylaundry.api;
 
 import android.os.AsyncTask;
+
+import com.w36495.everylaundry.BuildConfig;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,19 +14,23 @@ import java.net.URL;
 
 import timber.log.Timber;
 
-public class DeletePost extends AsyncTask<String, Void, String> {
+public class UpdatePost extends AsyncTask<String, Void, String> {
     @Override
     protected String doInBackground(String... strings) {
+
         if (BuildConfig.DEBUG) {
             Timber.plant(new Timber.DebugTree());
         }
 
-        String userID = (String) strings[1];
-        String postKey = (String) strings[2];
+        String postKey = (String) strings[1];
+        String categoryKey = (String) strings[2];
+        String postTitle = (String) strings[3];
+        String postContents = (String) strings[4];
 
         String serverURL = (String) strings[0];
         // 홈페이지로 치면 주소창에 파라미터 넘어가듯
-        String postParameters = "userID=" + userID + "&postKey=" + postKey;
+        String postParameters = "postKey=" + postKey + "&categoryKey=" + categoryKey
+                + "&postTitle=" + postTitle + "&postContents=" + postContents;
 
         StringBuilder stringBuilder = new StringBuilder();
 
@@ -47,13 +53,13 @@ public class DeletePost extends AsyncTask<String, Void, String> {
 
             InputStream inputStream;
             if (responseStatusCode == HttpURLConnection.HTTP_OK) {
-                Timber.d("DeletePost : HTTP_OK");
+                Timber.d("InsertPost : HTTP_OK");
                 inputStream = httpURLConnection.getInputStream();
-                Timber.d("DeletePost - getInputStream() : " + inputStream);
+                Timber.d("InsertPost - getInputStream() : " + inputStream);
             } else {
-                Timber.d("DeletePost : HTTP_FAIL");
+                Timber.d("InsertPost : HTTP_FAIL");
                 inputStream = httpURLConnection.getErrorStream();
-                Timber.d("DeletePost - getErrorStream() : " + inputStream);
+                Timber.d("InsertPost - getErrorStream() : " + inputStream);
             }
 
             InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "UTF-8");
@@ -68,10 +74,10 @@ public class DeletePost extends AsyncTask<String, Void, String> {
 
             bufferedReader.close();
 
-            Timber.d("DeletePost - stringBuilder : " + stringBuilder);
+            Timber.d("updatePost - stringBuilder : " + stringBuilder);
 
         } catch (IOException e) {
-            Timber.d("DeletePost : Error " + e.getMessage());
+            Timber.d("updatePost : Error " + e.getMessage());
             e.printStackTrace();
         }
         return stringBuilder.toString();

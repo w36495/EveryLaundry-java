@@ -1,6 +1,8 @@
-package com.w36495.everylaundry;
+package com.w36495.everylaundry.api;
 
 import android.os.AsyncTask;
+
+import com.w36495.everylaundry.BuildConfig;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,23 +14,19 @@ import java.net.URL;
 
 import timber.log.Timber;
 
-public class UpdatePost extends AsyncTask<String, Void, String> {
+public class UpdatePostRecommend extends AsyncTask<String, Void, String> {
     @Override
     protected String doInBackground(String... strings) {
-
         if (BuildConfig.DEBUG) {
             Timber.plant(new Timber.DebugTree());
         }
 
-        String postKey = (String) strings[1];
-        String categoryKey = (String) strings[2];
-        String postTitle = (String) strings[3];
-        String postContents = (String) strings[4];
+        String userID = (String) strings[1];
+        String postKey = (String) strings[2];
 
         String serverURL = (String) strings[0];
         // 홈페이지로 치면 주소창에 파라미터 넘어가듯
-        String postParameters = "postKey=" + postKey + "&categoryKey=" + categoryKey
-                + "&postTitle=" + postTitle + "&postContents=" + postContents;
+        String postParameters = "userID=" + userID + "&postKey=" + postKey;
 
         StringBuilder stringBuilder = new StringBuilder();
 
@@ -51,13 +49,13 @@ public class UpdatePost extends AsyncTask<String, Void, String> {
 
             InputStream inputStream;
             if (responseStatusCode == HttpURLConnection.HTTP_OK) {
-                Timber.d("InsertPost : HTTP_OK");
+                Timber.d("InsertPostRecommend : HTTP_OK");
                 inputStream = httpURLConnection.getInputStream();
-                Timber.d("InsertPost - getInputStream() : " + inputStream);
+                Timber.d("InsertPostRecommend - getInputStream() : " + inputStream);
             } else {
-                Timber.d("InsertPost : HTTP_FAIL");
+                Timber.d("InsertPostRecommend : HTTP_FAIL");
                 inputStream = httpURLConnection.getErrorStream();
-                Timber.d("InsertPost - getErrorStream() : " + inputStream);
+                Timber.d("InsertPostRecommend - getErrorStream() : " + inputStream);
             }
 
             InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "UTF-8");
@@ -72,10 +70,10 @@ public class UpdatePost extends AsyncTask<String, Void, String> {
 
             bufferedReader.close();
 
-            Timber.d("updatePost - stringBuilder : " + stringBuilder);
+            Timber.d("InsertPostRecommend - stringBuilder : " + stringBuilder);
 
         } catch (IOException e) {
-            Timber.d("updatePost : Error " + e.getMessage());
+            Timber.d("InsertPostRecommend : Error " + e.getMessage());
             e.printStackTrace();
         }
         return stringBuilder.toString();

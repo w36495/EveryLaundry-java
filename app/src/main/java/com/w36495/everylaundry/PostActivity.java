@@ -27,6 +27,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.w36495.everylaundry.adapter.BoardCommentAdapter;
+import com.w36495.everylaundry.api.DeletePost;
+import com.w36495.everylaundry.api.InsertComment;
+import com.w36495.everylaundry.api.UpdatePostRecommend;
 import com.w36495.everylaundry.data.Comment;
 import com.w36495.everylaundry.data.DatabaseInfo;
 import com.w36495.everylaundry.fragment.BoardFragment;
@@ -107,14 +110,14 @@ public class PostActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
 
-        if (getIntent().hasExtra("postKey")) {
-            postKey = intent.getIntExtra("postKey", -2);
-            categoryKey = intent.getIntExtra("categoryKey", -2);
-            postWriter = intent.getStringExtra("postWriter");
+        if (getIntent().hasExtra("choicePostKey")) {
+            postKey = intent.getIntExtra("choicePostKey", -2);
+            categoryKey = intent.getIntExtra("choicePostCategoryKey", -2);
+            postWriter = intent.getStringExtra("choicePostWriter");
             isRecommend = intent.getBooleanExtra("postRecommend", false);
         }
 
-        Timber.d("선택된 게시물 postKey : " + postKey);
+        Timber.d("선택된 게시물의 키 : " + postKey);
 
         getPostContents(postKey);
 
@@ -143,8 +146,8 @@ public class PostActivity extends AppCompatActivity {
                     String updatePostTitle = post_title.getText().toString();
                     String updatePostContents = post_contents.getText().toString();
 
-                    Timber.d("postKey : " + postKey);
-                    Timber.d("넘어갈 카테고리 키 : " + categoryKey);
+                    Timber.d("수정될 게시물의 키 : " + postKey);
+                    Timber.d("수정될 게시물의 카테고리 키 : " + categoryKey);
 
                     Intent updateIntent = new Intent(PostActivity.this, PostAddActivity.class);
                     updateIntent.putExtra("updateFlag", "N");
@@ -232,13 +235,13 @@ public class PostActivity extends AppCompatActivity {
         });
 
         // todo: 댓글 스와이프(새로고침)
-        commentSwipeLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                commentAdapter.notifyDataSetChanged();
-                commentSwipeLayout.setRefreshing(false);
-            }
-        });
+//        commentSwipeLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+//            @Override
+//            public void onRefresh() {
+//                commentAdapter.notifyDataSetChanged();
+//                commentSwipeLayout.setRefreshing(false);
+//            }
+//        });
 
     }
 
@@ -282,7 +285,7 @@ public class PostActivity extends AppCompatActivity {
         StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-                parsePostComment( response, postKey);
+                parsePostComment(response, postKey);
             }
         },
                 new Response.ErrorListener() {
@@ -302,18 +305,19 @@ public class PostActivity extends AppCompatActivity {
      * @param postKey
      */
     private void parsePostComment( String response, int postKey) {
-
         commentList = new ArrayList<>();
+
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = (JsonObject)jsonParser.parse(response);
         JsonArray jsonComment = (JsonArray)jsonObject.get("board_comments");
 
         for (int index=0; index<jsonComment.size(); index++) {
             JsonObject comments = (JsonObject)jsonComment.get(index);
-            commentKey++;
+            //commentKey++;
             if (postKey == comments.get("POST_KEY").getAsInt()) {
-                Comment comment = new Comment(comments.get("CM_KEY").getAsInt(),
-                        comments.get("CM_WRITER").getAsString(),
+                Comment comment = new Comment(
+                        comments.get("CM_KEY").getAsInt(),
+                        comments.get("USER_ID").getAsString(),
                         comments.get("POST_KEY").getAsInt(),
                         comments.get("CM_CONTENTS").getAsString(),
                         comments.get("REG_DT").getAsString());
@@ -321,8 +325,8 @@ public class PostActivity extends AppCompatActivity {
             }
         }
 
-        commentAdapter = new BoardCommentAdapter(this, commentList, postWriter);
-        commentRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        commentAdapter = new BoardCommentAdapter(PostActivity.this, commentList, postWriter);
+        commentRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
         commentRecyclerView.setAdapter(commentAdapter);
     }
 

@@ -22,6 +22,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.w36495.everylaundry.adapter.ReviewAdapter;
+import com.w36495.everylaundry.api.UpdateLaundryDetail;
 import com.w36495.everylaundry.data.DatabaseInfo;
 import com.w36495.everylaundry.data.Laundry;
 import com.w36495.everylaundry.data.Review;
