@@ -2,7 +2,6 @@ package com.w36495.everylaundry;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -10,8 +9,14 @@ import android.widget.EditText;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.w36495.everylaundry.api.InsertUser;
-import com.w36495.everylaundry.data.DatabaseInfo;
+import com.android.volley.BuildConfig;
+import com.w36495.everylaundry.api.UserAPI;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import timber.log.Timber;
 
 public class SignupActivity extends AppCompatActivity {
 
@@ -22,7 +27,12 @@ public class SignupActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signup);
-        Log.d("SignupActivity : ", "onCreate() 호출");
+
+        if (BuildConfig.DEBUG) {
+            Timber.plant(new Timber.DebugTree());
+        }
+        
+        Timber.d("onCreate() 호출");
 
         setInit();
     }
@@ -46,16 +56,24 @@ public class SignupActivity extends AppCompatActivity {
                 String userEmail = signup_email.getText().toString();
                 String userMobile = signup_mobile.getText().toString();
 
-                InsertUser insertUser = new InsertUser();
-                insertUser.execute(DatabaseInfo.setUserURL, userID, userPW, userNickNM, userEmail, userMobile);
+                Retrofit retrofit = RetrofitBuilder.getClient();
+                UserAPI userAPI = retrofit.create(UserAPI.class);
 
-                Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-                startActivity(intent);
+                userAPI.signup(userID, userPW, userMobile, userNickNM, userEmail).enqueue(new Callback<String>() {
+                    @Override
+                    public void onResponse(Call<String> call, Response<String> response) {
+                        if (response.isSuccessful()) {
+                            Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+                            startActivity(intent);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<String> call, Throwable t) {
+                        Timber.d("ERROR(signup) : " + t);
+                    }
+                });
             }
         });
-
     }
-
-
-
 }

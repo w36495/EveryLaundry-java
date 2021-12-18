@@ -17,26 +17,21 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.w36495.everylaundry.adapter.BoardCommentAdapter;
-import com.w36495.everylaundry.api.DeletePost;
-import com.w36495.everylaundry.api.InsertComment;
-import com.w36495.everylaundry.api.UpdatePostRecommend;
-import com.w36495.everylaundry.data.Comment;
-import com.w36495.everylaundry.data.DatabaseInfo;
+import com.w36495.everylaundry.api.CommentAPI;
+import com.w36495.everylaundry.domain.Comment;
+import com.w36495.everylaundry.domain.Post;
+import com.w36495.everylaundry.api.PostAPI;
 import com.w36495.everylaundry.fragment.BoardFragment;
 import com.w36495.everylaundry.util.DateUtil;
 
 import java.util.ArrayList;
+import java.util.List;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 import timber.log.Timber;
 
 /**
@@ -55,8 +50,9 @@ public class PostActivity extends AppCompatActivity {
     private Button post_comment_btn;
     private ImageButton post_update_btn, post_back_btn, post_delete_btn;
     private SwipeRefreshLayout commentSwipeLayout;
-
-    private RequestQueue requestQueue;
+    
+    private Retrofit retrofit;
+    private PostAPI postAPI;
 
     private int postKey = -1;
     private int categoryKey = -1;
@@ -67,6 +63,8 @@ public class PostActivity extends AppCompatActivity {
     private boolean isRecommend = false;
     private boolean userFlag = true;    // 작성자 == 로그인한사람 : true, 작성자 != 로그인한사람 : false;
 
+    private static int commentCnt = 0;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -74,13 +72,12 @@ public class PostActivity extends AppCompatActivity {
         setContentView(R.layout.activity_board_post);
         Timber.d("onCreate() 호출");
 
-        if (requestQueue == null) {
-            requestQueue = Volley.newRequestQueue(getApplicationContext());
-        }
-
         if (BuildConfig.DEBUG) {
             Timber.plant(new Timber.DebugTree());
         }
+
+        retrofit = RetrofitBuilder.getClient();
+        postAPI = retrofit.create(PostAPI.class);
 
         setInit();
     }
@@ -119,6 +116,7 @@ public class PostActivity extends AppCompatActivity {
 
         Timber.d("선택된 게시물의 키 : " + postKey);
 
+        // 게시물 호출
         getPostContents(postKey);
 
         // 세션으로부터 현재 로그인한 사용자의 아이디와 닉네임 넘겨받기
@@ -141,7 +139,6 @@ public class PostActivity extends AppCompatActivity {
         post_update_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 if (userFlag) {
                     String updatePostTitle = post_title.getText().toString();
                     String updatePostContents = post_contents.getText().toString();
@@ -173,8 +170,17 @@ public class PostActivity extends AppCompatActivity {
                         // 색이 꽉 차있는 추천 이미지로 변경
                         post_update_btn.setImageResource(R.drawable.ic_baseline_thumb_up_alt_24);
                     }
-                    UpdatePostRecommend updatePostRecommend = new UpdatePostRecommend();
-                    updatePostRecommend.execute(DatabaseInfo.updatePostRecommendURL, loginID, String.valueOf(postKey));
+                    postAPI.updatePostRecommend(loginID, postKey).enqueue(new Callback<String>() {
+                        @Override
+                        public void onResponse(Call<String> call, Response<String> response) {
+
+                        }
+
+                        @Override
+                        public void onFailure(Call<String> call, Throwable t) {
+                            Timber.d("ERROR(updatePostRecommend) : " + t);
+                        }
+                    });
                 }
 
             }
@@ -226,22 +232,25 @@ public class PostActivity extends AppCompatActivity {
                 Timber.d("댓글작성한 글 키 : " + postKey);
                 Timber.d("댓글 : " + comment);
 
-                InsertComment insertComment = new InsertComment();
-                insertComment.execute(DatabaseInfo.setBoardCommentURL, String.valueOf(commentKey), loginNickNM, String.valueOf(postKey), comment);
-                Timber.d("1 added comments!");
+                CommentAPI commentAPI = retrofit.create(CommentAPI.class);
+                commentAPI.insertComment(5, loginID, postKey, comment).enqueue(new Callback<String>() {
+                    @Override
+                    public void onResponse(Call<String> call, Response<String> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            Toast.makeText(PostActivity.this, "댓글이 작성되었습니다.", Toast.LENGTH_SHORT).show();
+                        }
+                    }
 
+                    @Override
+                    public void onFailure(Call<String> call, Throwable t) {
+                        Timber.d("ERROR(insertComment) : " + t);
+                    }
+                });
                 post_comment.setText("");
             }
         });
 
         // todo: 댓글 스와이프(새로고침)
-//        commentSwipeLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-//            @Override
-//            public void onRefresh() {
-//                commentAdapter.notifyDataSetChanged();
-//                commentSwipeLayout.setRefreshing(false);
-//            }
-//        });
 
     }
 
@@ -255,13 +264,9 @@ public class PostActivity extends AppCompatActivity {
                 .setPositiveButton("삭제", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Timber.d("게시물 삭제 버튼 클릭");
-                        DeletePost deletePost = new DeletePost();
-                        deletePost.execute(DatabaseInfo.deletePost, loginID, String.valueOf(postKey));
-                        Toast.makeText(getApplicationContext(), "게시물이 삭제되었습니다.", Toast.LENGTH_SHORT).show();
-                        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                        intent.putExtra("PostActivity", "PostActivity");
-                        startActivity(intent);
+                        // 게시물 삭제
+                        removePost();
+
                     }
                 })
                 .setNegativeButton("취소", new DialogInterface.OnClickListener() {
@@ -277,113 +282,109 @@ public class PostActivity extends AppCompatActivity {
     }
 
     /**
-     * DB 연결하여 댓글 가져와서 보여주기
+     * 게시물 삭제
      */
-    private void showPostComment() {
-        String URL = DatabaseInfo.showBoardCommentURl;
-
-        StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
+    private void removePost() {
+        postAPI.deletePost(postKey, loginID).enqueue(new Callback<String>() {
             @Override
-            public void onResponse(String response) {
-                parsePostComment(response, postKey);
+            public void onResponse(Call<String> call, Response<String> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Toast.makeText(getApplicationContext(), "게시물이 삭제되었습니다.", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                    intent.putExtra("PostActivity", "PostActivity");
+                    startActivity(intent);
+                }
             }
-        },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
 
-                    }
-                });
-
-        request.setShouldCache(false);
-        requestQueue.add(request);
+            @Override
+            public void onFailure(Call<String> call, Throwable t) {
+                Timber.d("ERROR(deletePost) : " + t);
+            }
+        });
     }
 
     /**
-     * DB에서 댓글 가져오기
-     * @param response
-     * @param postKey
+     * DB 연결하여 댓글 가져와서 보여주기
      */
-    private void parsePostComment( String response, int postKey) {
-        commentList = new ArrayList<>();
+    //todo : 댓글 수정
+    private void showPostComment() {
+        Retrofit retrofit = RetrofitBuilder.getClient();
+        CommentAPI commentAPI = retrofit.create(CommentAPI.class);
 
-        JsonParser jsonParser = new JsonParser();
-        JsonObject jsonObject = (JsonObject)jsonParser.parse(response);
-        JsonArray jsonComment = (JsonArray)jsonObject.get("board_comments");
-
-        for (int index=0; index<jsonComment.size(); index++) {
-            JsonObject comments = (JsonObject)jsonComment.get(index);
-            //commentKey++;
-            if (postKey == comments.get("POST_KEY").getAsInt()) {
-                Comment comment = new Comment(
-                        comments.get("CM_KEY").getAsInt(),
-                        comments.get("USER_ID").getAsString(),
-                        comments.get("POST_KEY").getAsInt(),
-                        comments.get("CM_CONTENTS").getAsString(),
-                        comments.get("REG_DT").getAsString());
-                commentList.add(comment);
+        commentAPI.getCommentCount(postKey).enqueue(new Callback<String>() {
+            @Override
+            public void onResponse(Call<String> call, Response<String> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    System.out.println("댓글 응답 : " + response.body());
+                }
             }
-        }
 
-        commentAdapter = new BoardCommentAdapter(PostActivity.this, commentList, postWriter);
-        commentRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
-        commentRecyclerView.setAdapter(commentAdapter);
+            @Override
+            public void onFailure(Call<String> call, Throwable t) {
+                Timber.d("ERROR(getCommentCount) : " + t);
+            }
+        });
+
+        System.out.println("댓글 개수 : " + commentCnt);
+
+        if (commentCnt != 0) {
+            commentAPI.getCommentList(postKey).enqueue(new Callback<List<Comment>>() {
+                @Override
+                public void onResponse(Call<List<Comment>> call, retrofit2.Response<List<Comment>> response) {
+                    commentList = new ArrayList<>();
+                    if (response.isSuccessful() && response.body() != null) {
+                        commentList = (ArrayList<Comment>) response.body();
+
+                    }
+                    commentKey = commentList.size();
+
+                    commentAdapter = new BoardCommentAdapter(PostActivity.this, commentList, postWriter);
+                    commentRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
+                    commentRecyclerView.setAdapter(commentAdapter);
+                }
+
+                @Override
+                public void onFailure(Call<List<Comment>> call, Throwable t) {
+                    Timber.d("ERROR(getCommentList) : " + t);
+                }
+            });
+        }
     }
 
+
+    /**
+     * 게시물 출력
+     * 
+     * @param postKey
+     */
     private void getPostContents(int postKey) {
         Timber.d("getPostContents() 호출");
 
-        String URL = DatabaseInfo.showPostURL;
-
-        StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
+        postAPI.getPost(postKey).enqueue(new Callback<Post>() {
             @Override
-            public void onResponse(String response) {
-                Timber.d("parsePostContents() 성공 : " + response);
-                parsePostContents(response, postKey);
+            public void onResponse(Call<Post> call, retrofit2.Response<Post> response) {
+                if (response.isSuccessful()) {
+                    Post post = response.body();
+
+                    // 날짜
+                    String registDate = DateUtil.parseDate(post.getPostRegistDate());
+
+                    post_title.setText(post.getPostTitle());
+                    post_contents.setText(post.getPostContents());
+                    post_writer.setText(post.getPostWriter());
+                    post_regist_date.setText(registDate);
+                    post_view_count.setText(String.valueOf(post.getPostViewCnt()));
+                    post_recommend_count.setText(String.valueOf(post.getPostRecommentCnt()));
+                    Timber.d(post.toString());
+                } else {
+                    Toast.makeText(PostActivity.this, "게시물을 불러오기 실패하였습니다.", Toast.LENGTH_SHORT).show();
+                }
             }
-        },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Timber.d("parsePostContents() 에러 : " + error);
-                    }
-                });
 
-        request.setShouldCache(false);
-        requestQueue.add(request);
-
-    }
-
-    private void parsePostContents(String response, int postKey) {
-        JsonParser jsonParser = new JsonParser();
-        JsonObject object = (JsonObject) jsonParser.parse(response);
-        JsonArray postArray = (JsonArray) object.get("posts");
-
-        JsonObject post = new JsonObject();
-        for (int index=0; index<postArray.size(); index++) {
-            post = (JsonObject) postArray.get(index);
-            if (postKey == post.get("POST_KEY").getAsInt()) {
-                break;
+            @Override
+            public void onFailure(Call<Post> call, Throwable t) {
+                Timber.d("ERROR(getPost) : " +  t);
             }
-        }
-
-        System.out.println("제목 : " + post.get("POST_TITLE"));
-        System.out.println("내용 : " + post.get("POST_CONTENTS"));
-        System.out.println("글쓴이 : " + post.get("USER_ID"));
-
-        // 날짜
-        String registDate = DateUtil.parseDate(post.get("REG_DT").getAsString());
-
-        post_title.setText(post.get("POST_TITLE").getAsString());
-        post_contents.setText(post.get("POST_CONTENTS").getAsString());
-        post_writer.setText(post.get("USER_ID").getAsString());
-        post_regist_date.setText(registDate);
-        post_view_count.setText(post.get("VIEW_CNT").getAsString());
-        post_recommend_count.setText(post.get("RECOMMENT_CNT").getAsString());
-
-        this.postWriter = post.get("USER_ID").getAsString();
-
+        });
     }
-
-
 }

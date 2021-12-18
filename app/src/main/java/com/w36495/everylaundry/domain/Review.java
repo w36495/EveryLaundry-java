@@ -1,11 +1,22 @@
-package com.w36495.everylaundry.data;
+package com.w36495.everylaundry.domain;
+
+import com.google.gson.annotations.SerializedName;
 
 public class Review {
 
+    @SerializedName("RV_KEY")
     private int reviewKey;
+
+    @SerializedName("USER_ID")
     private String reviewUserID;
+
+    @SerializedName("LAUNDRY_KEY")
     private int reviewLaundryKey;
+
+    @SerializedName("RV_CONTENTS")
     private String reviewContents;
+
+    @SerializedName("RED_DT")
     private String reviewRegistDate;
 
     public Review(int reviewKey, String reviewUserID, int reviewLaundryKey, String reviewContents, String reviewRegistDate) {

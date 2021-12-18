@@ -9,21 +9,20 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.w36495.everylaundry.PostClickListener;
-import com.w36495.everylaundry.data.Post;
+import com.w36495.everylaundry.domain.Category;
+import com.w36495.everylaundry.domain.Post;
 import com.w36495.everylaundry.R;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Locale;
 
 public class BoardPostAdapter extends RecyclerView.Adapter<BoardPostHolder> {
 
     private Context context;
     private ArrayList<Post> postList;
-    private ArrayList<String> categoryList;
+    private ArrayList<Category> categoryList;
     private PostClickListener postClickListener;
 
-    public BoardPostAdapter(Context context, ArrayList<Post> postList, ArrayList<String> categoryList) {
+    public BoardPostAdapter(Context context, ArrayList<Post> postList, ArrayList<Category> categoryList) {
         this.context = context;
         this.postList = postList;
         this.categoryList = categoryList;
@@ -41,7 +40,7 @@ public class BoardPostAdapter extends RecyclerView.Adapter<BoardPostHolder> {
         int postCategory = postList.get(position).getPostCategory();
         for (int index = 0; index < categoryList.size(); index++) {
             if (postCategory == index) {
-                holder.postListCategory.setText(categoryList.get(index));
+                holder.postListCategory.setText(categoryList.get(index).getCategoryTitle());
                 break;
             }
         }

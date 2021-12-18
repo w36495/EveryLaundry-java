@@ -1,15 +1,28 @@
-package com.w36495.everylaundry.data;
+package com.w36495.everylaundry.domain;
+
+import com.google.gson.annotations.SerializedName;
 
 /**
  * User Data Class
  */
 public class User {
 
+    @SerializedName("USER_ID")
     private String userId;
+
+    @SerializedName("USER_PASSWD")
     private String userPassword;
+
+    @SerializedName("USER_MOBILE")
     private String userMobile;
+
+    @SerializedName("USER_EMAIL")
     private String userEmail;
+
+    @SerializedName("USER_NICKNM")
     private String userNickname;
+
+    @SerializedName("USER_IMG")
     private int userImg;
 
     public User(String userId, String userPassword, String userMobile, String userEmail, String userNickname, int userImg) {

@@ -1,21 +1,19 @@
-package com.w36495.everylaundry.data;
+package com.w36495.everylaundry.domain;
 
-public class LaundrySearch {
+public class LaundryLike {
 
     private String userID;
     private int laundryKey;
     private String laundryNM;
     private String laundryAddress;
     private String laundryTel;
-    private String laundryRegistDate;
 
-    public LaundrySearch(String userID, int laundryKey, String laundryNM, String laundryAddress, String laundryTel, String laundryRegistDate) {
+    public LaundryLike(String userID, int laundryKey, String laundryNM, String laundryAddress, String laundryTel) {
         this.userID = userID;
         this.laundryKey = laundryKey;
         this.laundryNM = laundryNM;
         this.laundryAddress = laundryAddress;
         this.laundryTel = laundryTel;
-        this.laundryRegistDate = laundryRegistDate;
     }
 
     public String getUserID() {
@@ -58,23 +56,14 @@ public class LaundrySearch {
         this.laundryTel = laundryTel;
     }
 
-    public String getLaundryRegistDate() {
-        return laundryRegistDate;
-    }
-
-    public void setLaundryRegistDate(String laundryRegistDate) {
-        this.laundryRegistDate = laundryRegistDate;
-    }
-
     @Override
     public String toString() {
-        return "LaundrySearch{" +
+        return "LaundryLike{" +
                 "userID='" + userID + '\'' +
                 ", laundryKey=" + laundryKey +
                 ", laundryNM='" + laundryNM + '\'' +
                 ", laundryAddress='" + laundryAddress + '\'' +
                 ", laundryTel='" + laundryTel + '\'' +
-                ", laundryRegistDate='" + laundryRegistDate + '\'' +
                 '}';
     }
 }

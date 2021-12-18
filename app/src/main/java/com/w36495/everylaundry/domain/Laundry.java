@@ -1,24 +1,44 @@
-package com.w36495.everylaundry.data;
+package com.w36495.everylaundry.domain;
+
+
+import com.google.gson.annotations.SerializedName;
 
 /**
  * Laundry Data Class
  */
 public class Laundry {
 
+    @SerializedName("LAUNDRY_KEY")
     private int laundryKey;
+
+    @SerializedName("LAUNDRY_NM")
     private String laundryName;
+
+    @SerializedName("LAUNDRY_TEL")
     private String laundryTel;
+
+    @SerializedName("LAUNDRY_ADDR")
     private String laundryAddress;
+
+    @SerializedName("LAUNDRY_ZIP_CODE")
     private String laundryZipCode;
+
+    @SerializedName("LAUNDRY_TYPE")
+    private String laundryType;
+
+    @SerializedName("COORDS_X")
     private Double laundryCoordsX;
+
+    @SerializedName("COORDS_Y")
     private Double laundryCoordsY;
 
-    public Laundry(int laundryKey, String laundryName, String laundryTel, String laundryAddress, String laundryZipCode, Double laundryCoordsX, Double laundryCoordsY) {
+    public Laundry(int laundryKey, String laundryName, String laundryTel, String laundryAddress, String laundryZipCode, String laundryType, Double laundryCoordsX, Double laundryCoordsY) {
         this.laundryKey = laundryKey;
         this.laundryName = laundryName;
         this.laundryTel = laundryTel;
         this.laundryAddress = laundryAddress;
         this.laundryZipCode = laundryZipCode;
+        this.laundryType = laundryType;
         this.laundryCoordsX = laundryCoordsX;
         this.laundryCoordsY = laundryCoordsY;
     }
@@ -63,6 +83,14 @@ public class Laundry {
         this.laundryZipCode = laundryZipCode;
     }
 
+    public String getLaundryType() {
+        return laundryType;
+    }
+
+    public void setLaundryType(String laundryType) {
+        this.laundryType = laundryType;
+    }
+
     public Double getLaundryCoordsX() {
         return laundryCoordsX;
     }
@@ -87,6 +115,7 @@ public class Laundry {
                 ", laundryTel='" + laundryTel + '\'' +
                 ", laundryAddress='" + laundryAddress + '\'' +
                 ", laundryZipCode='" + laundryZipCode + '\'' +
+                ", laundryType='" + laundryType + '\'' +
                 ", laundryCoordsX=" + laundryCoordsX +
                 ", laundryCoordsY=" + laundryCoordsY +
                 '}';

@@ -12,25 +12,20 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.BuildConfig;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.w36495.everylaundry.MainActivity;
-import com.w36495.everylaundry.adapter.BoardCategoryAdapter;
-import com.w36495.everylaundry.data.DatabaseInfo;
-import com.w36495.everylaundry.data.Laundry;
+import com.w36495.everylaundry.RetrofitBuilder;
+import com.w36495.everylaundry.api.LaundryAPI;
 import com.w36495.everylaundry.R;
 import com.w36495.everylaundry.adapter.LaundryLikeAdapter;
-import com.w36495.everylaundry.data.LaundryLike;
+import com.w36495.everylaundry.domain.LaundryLike;
 
 import java.util.ArrayList;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Retrofit;
 import timber.log.Timber;
 
 /**
@@ -43,7 +38,7 @@ public class LikeFragment extends Fragment {
 
     private ArrayList<LaundryLike> laundryList;
 
-    private RequestQueue requestQueue;
+    private String loginID = null;
 
     @Nullable
     @Override
@@ -54,27 +49,17 @@ public class LikeFragment extends Fragment {
             Timber.plant(new Timber.DebugTree());
         }
 
-        if (requestQueue == null) {
-            requestQueue = Volley.newRequestQueue(view.getContext());
-        }
         setInit(view);
 
         return view;
     }
 
     private void setInit(View view) {
-
+        loginID = MainActivity.getLoginUserID();
         like_recyclerView = view.findViewById(R.id.like_recyclerView);
 
-
-
-
-
+        // 즐겨찾는 세탁소 목록
         showLaundryLikeList(view);
-
-
-
-
     }
 
     /**
@@ -82,60 +67,40 @@ public class LikeFragment extends Fragment {
      */
     private void showLaundryLikeList(View view) {
 
-        String URL = DatabaseInfo.showLaundryLikeListURL;
+        Retrofit retrofit = RetrofitBuilder.getClient();
+        LaundryAPI laundryAPI = retrofit.create(LaundryAPI.class);
 
-
-        StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
+        laundryAPI.getLaundryLikeList(loginID).enqueue(new Callback<JsonArray>() {
             @Override
-            public void onResponse(String response) {
-                Timber.d("showLaundryLikeList() - onResponse : " + response);
-                parseLaundryLikeList(view, response);
-            }
-        },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Timber.d("showLaundryLikeList() - onErrorResponse : " + error);
-                        return;
+            public void onResponse(Call<JsonArray> call, retrofit2.Response<JsonArray> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    laundryList = new ArrayList<>();
+                    
+                    for (int index = 0; index < response.body().size(); index++) {
+                        JsonObject like = (JsonObject) response.body().get(index);
+
+                        LaundryLike laundryLike = new LaundryLike(
+                                like.get("USER_ID").getAsString(),
+                                like.get("LAUNDRY_KEY").getAsInt(),
+                                like.get("LAUNDRY_NM").getAsString(),
+                                like.get("LAUNDRY_ADDR").getAsString(),
+                                like.get("LAUNDRY_TEL").getAsString()
+                        );
+
+                        laundryList.add(laundryLike);
                     }
-                });
 
-        request.setShouldCache(false);
-        requestQueue.add(request);
-    }
+                    laundryLikeAdapter = new LaundryLikeAdapter(view.getContext(), laundryList);
 
-    private void parseLaundryLikeList(View view, String response) {
-        laundryList = new ArrayList<>();
-
-        String loginUserID = MainActivity.getLoginUserID();
-
-        JsonParser jsonParser = new JsonParser();
-        JsonObject jsonObject = (JsonObject)jsonParser.parse(response);
-        JsonArray jsonLike = (JsonArray)jsonObject.get("laundryLike");
-
-        Timber.d("parseLaundryLikeList의 jsonLike SIZE : " + jsonLike.size());
-
-        for (int index=0; index<jsonLike.size(); index++) {
-            JsonObject laundryLike = (JsonObject)jsonLike.get(index);
-
-
-            if (loginUserID.equals(laundryLike.get("USER_ID").getAsString())) {
-
-                LaundryLike like = new LaundryLike(
-                        laundryLike.get("USER_ID").getAsString(),
-                        laundryLike.get("LAUNDRY_KEY").getAsInt(),
-                        laundryLike.get("LAUNDRY_NM").getAsString(),
-                        laundryLike.get("LAUNDRY_ADDR").getAsString(),
-                        laundryLike.get("LAUNDRY_TEL").getAsString()
-                );
-                System.out.println(like.toString());
-                laundryList.add(like);
+                    like_recyclerView.setLayoutManager(new LinearLayoutManager(view.getContext()));
+                    like_recyclerView.setAdapter(laundryLikeAdapter);
+                }
             }
-        }
 
-        laundryLikeAdapter = new LaundryLikeAdapter(view.getContext(), laundryList);
-
-        like_recyclerView.setLayoutManager(new LinearLayoutManager(view.getContext()));
-        like_recyclerView.setAdapter(laundryLikeAdapter);
+            @Override
+            public void onFailure(Call<JsonArray> call, Throwable t) {
+                Timber.d("ERROR(getLaundryLikeList) : " + t);
+            }
+        });
     }
 }

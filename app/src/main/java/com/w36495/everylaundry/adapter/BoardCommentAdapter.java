@@ -1,7 +1,6 @@
 package com.w36495.everylaundry.adapter;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,7 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.w36495.everylaundry.R;
-import com.w36495.everylaundry.data.Comment;
+import com.w36495.everylaundry.domain.Comment;
 
 import java.util.ArrayList;
 

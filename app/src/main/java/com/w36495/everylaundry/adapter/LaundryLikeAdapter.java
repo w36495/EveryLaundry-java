@@ -8,9 +8,8 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.w36495.everylaundry.data.Laundry;
 import com.w36495.everylaundry.R;
-import com.w36495.everylaundry.data.LaundryLike;
+import com.w36495.everylaundry.domain.LaundryLike;
 
 import java.util.ArrayList;
 

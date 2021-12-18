@@ -1,25 +1,46 @@
-package com.w36495.everylaundry.data;
+package com.w36495.everylaundry.domain;
 
-import java.util.Date;
+import com.google.gson.annotations.SerializedName;
 
 /**
  * Post Data Class
  */
 public class Post {
 
+    @SerializedName("POST_KEY")
     private int postKey;
+
+    @SerializedName("USER_ID")
     private String postWriter;
+
+    @SerializedName("CATEGORY_KEY")
     private int postCategory;
+
+    @SerializedName("POST_TITLE")
     private String postTitle;
+
+    @SerializedName("POST_CONTENTS")
     private String postContents;
+
+    @SerializedName("VIEW_CNT")
     private int postViewCnt;
+
+    @SerializedName("RECOMMENT_CNT")
     private int postRecommentCnt;
-    private boolean postNotice;
-    private boolean postCommentFlag;
+
+    @SerializedName("POST_NOTICE")
+    private char postNotice;
+
+    @SerializedName("POST_CM_FLAG")
+    private char postCommentFlag;
+
+    @SerializedName("REG_DT")
     private String postRegistDate;
+
+    @SerializedName("UPD_DT")
     private String postUpdateDate;
 
-    public Post(int postKey, String postWriter, int postCategory, String postTitle, String postContents, int postViewCnt, int postRecommentCnt, boolean postNotice, boolean postCommentFlag, String postRegistDate, String postUpdateDate) {
+    public Post(int postKey, String postWriter, int postCategory, String postTitle, String postContents, int postViewCnt, int postRecommentCnt, char postNotice, char postCommentFlag, String postRegistDate, String postUpdateDate) {
         this.postKey = postKey;
         this.postWriter = postWriter;
         this.postCategory = postCategory;
@@ -85,23 +106,23 @@ public class Post {
         return postRecommentCnt;
     }
 
-    public void setPostRecommentCnt(int postRecommentCnt) {
+    public void setPostRecommentCnt(char postRecommentCnt) {
         this.postRecommentCnt = postRecommentCnt;
     }
 
-    public boolean getPostNotice() {
+    public char getPostNotice() {
         return postNotice;
     }
 
-    public void setPostNotice(boolean postNotice) {
+    public void setPostNotice(char postNotice) {
         this.postNotice = postNotice;
     }
 
-    public boolean getPostCommentFlag() {
+    public char getPostCommentFlag() {
         return postCommentFlag;
     }
 
-    public void setPostCommentFlag(boolean postCommentFlag) {
+    public void setPostCommentFlag(char postCommentFlag) {
         this.postCommentFlag = postCommentFlag;
     }
 

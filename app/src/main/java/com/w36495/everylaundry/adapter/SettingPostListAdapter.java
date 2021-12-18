@@ -9,7 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.w36495.everylaundry.R;
-import com.w36495.everylaundry.data.Post;
+import com.w36495.everylaundry.domain.Post;
 
 import java.util.ArrayList;
 

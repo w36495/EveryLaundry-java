@@ -3,9 +3,9 @@ package com.w36495.everylaundry.fragment;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -19,34 +19,32 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.android.volley.BuildConfig;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.w36495.everylaundry.api.CategoryAPI;
+import com.w36495.everylaundry.api.PostAPI;
 import com.w36495.everylaundry.BoardCategoryClickListener;
-import com.w36495.everylaundry.api.InsertPostRecommend;
+import com.w36495.everylaundry.RetrofitBuilder;
 import com.w36495.everylaundry.MainActivity;
-import com.w36495.everylaundry.api.UpdatePostViewCount;
-import com.w36495.everylaundry.data.DatabaseInfo;
+import com.w36495.everylaundry.domain.Category;
 import com.w36495.everylaundry.PostActivity;
 import com.w36495.everylaundry.PostAddActivity;
 import com.w36495.everylaundry.PostClickListener;
-import com.w36495.everylaundry.data.Post;
+import com.w36495.everylaundry.domain.Post;
 import com.w36495.everylaundry.R;
 import com.w36495.everylaundry.adapter.BoardCategoryAdapter;
 import com.w36495.everylaundry.adapter.BoardPostAdapter;
-import com.w36495.everylaundry.util.DateUtil;
 
 import java.util.ArrayList;
+import java.util.List;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 import timber.log.Timber;
 
-public class BoardFragment extends Fragment {
+public class BoardFragment extends Fragment implements View.OnClickListener {
     private RecyclerView categoryRecyclerView;
     private RecyclerView postRecyclerView;
     private BoardCategoryAdapter categoryAdapter;
@@ -54,16 +52,24 @@ public class BoardFragment extends Fragment {
 
     private SwipeRefreshLayout boardSwipeLayout;
     private FloatingActionButton board_add_fab;
+    private Button board_category_btn1, board_category_btn2, board_category_btn3, board_category_btn4, board_category_btn5;
 
     private RequestQueue requestQueue;
 
     private int lastPostKey = -1;   // 마지막 게시물 키
-    public static ArrayList<String> categoryList;
+    public static ArrayList<Category> categoryList;
+    private int categoryKey = 0;
     private ArrayList<Post> postList;
+
+    // Retrofit2
+    private Retrofit retrofit;
+    private PostAPI postAPI;
+    private CategoryAPI categoryAPI;
 
     private String loginID = null;
 
     private BoardCategoryClickListener boardCategoryClickListener;
+
 
     @Nullable
     @Override
@@ -78,16 +84,33 @@ public class BoardFragment extends Fragment {
             requestQueue = Volley.newRequestQueue(view.getContext());
         }
 
+        retrofit = RetrofitBuilder.getClient();
+        postAPI = retrofit.create(PostAPI.class);
+        categoryAPI = retrofit.create(CategoryAPI.class);
+
         setInit(view);
         return view;
     }
 
     private void setInit(View view) {
 
-        categoryRecyclerView = view.findViewById(R.id.board_category_recyclerView);
         postRecyclerView = view.findViewById(R.id.board_post_recyclerView);
         board_add_fab = view.findViewById(R.id.board_add_fab);
         boardSwipeLayout = view.findViewById(R.id.board_swipeLayout);
+
+        board_category_btn1 = view.findViewById(R.id.board_category_btn1);
+        board_category_btn2 = view.findViewById(R.id.board_category_btn2);
+        board_category_btn3 = view.findViewById(R.id.board_category_btn3);
+        board_category_btn4 = view.findViewById(R.id.board_category_btn4);
+        board_category_btn5 = view.findViewById(R.id.board_category_btn5);
+        
+        // 카테고리 클릭 이벤트
+        board_category_btn1.setOnClickListener(this);
+        board_category_btn2.setOnClickListener(this);
+        board_category_btn3.setOnClickListener(this);
+        board_category_btn4.setOnClickListener(this);
+        board_category_btn5.setOnClickListener(this);
+
 
         // 게시물 새로고침
         boardSwipeLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -99,17 +122,16 @@ public class BoardFragment extends Fragment {
             }
         });
 
-        categoryList = new ArrayList<>();
 
         // 세션
         loginID = MainActivity.getLoginUserID();
 
 
-        // 카테고리 //
-        showBoardCategory(view);
+        // 카테고리 설정
+        setBoardCategory();
 
         // 게시물
-        showBoardPost(view);
+        setBoardPost(view);
 
 
         // 게시물 작성 버튼
@@ -123,252 +145,166 @@ public class BoardFragment extends Fragment {
         });
 
 
+
+
     }
 
     /**
-     * 카테고리
+     * 카테고리 목록 표시
      */
-    private void showBoardCategory(View view) {
-        String URL = DatabaseInfo.showBoardCategoryURL;
-
-        StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
+    private void setBoardCategory() {
+        
+        categoryAPI.getCategoryAll().enqueue(new Callback<List<Category>>() {
             @Override
-            public void onResponse(String response) {
-                Timber.d("showBoardCategory() - onResponse : " + response);
-                parseBoardCategory(response, view, categoryList);
+            public void onResponse(Call<List<Category>> call, retrofit2.Response<List<Category>> response) {
+                if (response.isSuccessful()) {
+                    categoryList = (ArrayList<Category>) response.body();
+                    board_category_btn1.setText(categoryList.get(0).getCategoryTitle());
+                    board_category_btn2.setText(categoryList.get(1).getCategoryTitle());
+                    board_category_btn3.setText(categoryList.get(2).getCategoryTitle());
+                    board_category_btn4.setText(categoryList.get(3).getCategoryTitle());
+                    board_category_btn5.setText(categoryList.get(4).getCategoryTitle());
+                }
             }
-        },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Timber.d("showBoardCategory() - onErrorResponse : " + error);
-                        return;
-                    }
-                });
 
-        request.setShouldCache(false);
-        requestQueue.add(request);
-    }
-
-    /**
-     * DB로부터 가져온 카테고리데이터 가공 => 어댑터통해서 카테고리 띄우기
-     */
-    private void parseBoardCategory(String response, View view, ArrayList<String> categoryList) {
-
-        JsonParser jsonParser = new JsonParser();
-        JsonObject jsonObject = (JsonObject)jsonParser.parse(response);
-        JsonArray jsonCategory = (JsonArray)jsonObject.get("board_category");
-
-        for (int index=0; index<jsonCategory.size(); index++) {
-            JsonObject category = (JsonObject)jsonCategory.get(index);
-
-            // #카테고리
-            StringBuilder builder = new StringBuilder();
-            builder.append("#").append(category.get("CATEGORY_TITLE").getAsString());
-
-            categoryList.add(builder.toString());
-        }
-
-        categoryAdapter = new BoardCategoryAdapter(view.getContext(), categoryList);
-        categoryRecyclerView.setLayoutManager(new LinearLayoutManager(view.getContext(), LinearLayoutManager.HORIZONTAL, false));
-        categoryRecyclerView.setAdapter(categoryAdapter);
-
-
-        categoryAdapter.setOnBoardCategoryClicked(new BoardCategoryClickListener() {
             @Override
-            public void onBoardCategoryClicked(View view, int position) {
-                Toast.makeText(getActivity(), "선택한 카테고리 : " + position, Toast.LENGTH_SHORT).show();
+            public void onFailure(Call<List<Category>> call, Throwable t) {
+
             }
         });
     }
 
     /**
-     * 글
+     * 게시물 목록
+     * 
+     * @param view
      */
-
-    private void showBoardPost(View view) {
-        String URL = DatabaseInfo.showBoardPostURL;
-
-        StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
+    private void setBoardPost(View view) {
+        postAPI.getPostList().enqueue(new Callback<List<Post>>() {
             @Override
-            public void onResponse(String response) {
-                Timber.d("showBoardPost() - onResponse : " + response);
-                parseBoardPost(response, view);
-            }
-        },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Timber.d("showBoardPost() - onErrorResponse : " + error);
-                        return;
-                    }
-                });
+            public void onResponse(Call<List<Post>> call, retrofit2.Response<List<Post>> response) {
+                if (response.isSuccessful()) {
+                    if (!response.body().isEmpty()) {
+                        // 게시물 마지막 키
+                        lastPostKey = response.body().size();
+                        postList = (ArrayList<Post>) response.body();
+                        postAdapter = new BoardPostAdapter(view.getContext(), postList, categoryList);
+                        postRecyclerView.setLayoutManager(new LinearLayoutManager(view.getContext()));
+                        postRecyclerView.setAdapter(postAdapter);
 
-        request.setShouldCache(false);
-        requestQueue.add(request);
-    }
+                        // 게시물 클릭했을 때 이벤트
+                        postAdapter.setOnPostClickListener(new PostClickListener() {
+                            @Override
+                            public void onClickPost(View view, int position) {
+                                // 선택한 게시물
+                                Post selectedPost = postList.get(position);
+                                Retrofit retrofit = RetrofitBuilder.getClient();
+                                PostAPI postAPI = retrofit.create(PostAPI.class);
 
-    private void parseBoardPost(String response, View view) {
+                                // Recommend Setting
+                                postAPI.insertPostRecommend(loginID, selectedPost.getPostKey()).enqueue(new Callback<String>() {
+                                    @Override
+                                    public void onResponse(Call<String> call, Response<String> response) { }
 
-        postList = new ArrayList<>();
+                                    @Override
+                                    public void onFailure(Call<String> call, Throwable t) {
+                                        Timber.d("ERROR(insertPostRecommend) : " + t);
+                                    }
+                                });
 
-        JsonParser jsonParser = new JsonParser();
-        JsonObject jsonObject = (JsonObject) jsonParser.parse(response);
-        JsonArray jsonPost = (JsonArray) jsonObject.get("posts");
+                                // 게시물 작성자 != 로그인 사용자 => 조회수 업데이트/따봉 표시
+                                if (loginID.equals(selectedPost.getPostWriter()) == false) {
+                                    // 조회수 조회 -> 증가
+                                    postAPI.updatePostViewCount(selectedPost.getPostKey()).enqueue(new Callback<String>() {
+                                        @Override
+                                        public void onResponse(Call<String> call, Response<String> response) {
 
-        for (int index=0; index<jsonPost.size(); index++) {
-            JsonObject jsonOnePost = (JsonObject)jsonPost.get(index);
+                                        }
 
-            boolean postNotice = false;
-            boolean postCommentFlag = true;
+                                        @Override
+                                        public void onFailure(Call<String> call, Throwable t) {
+                                            Timber.d("ERROR(updatePostViewCount) : " + t);
+                                        }
+                                    });
 
-            if (jsonOnePost.get("POST_NOTICE").getAsCharacter() == 'Y') {
-                postNotice = true;
-            }
-            if (jsonOnePost.get("POST_CM_FLAG").getAsCharacter() == 'N') {
-                postCommentFlag = false;
-            }
+                                    postAPI.getPostRecommend(loginID, selectedPost.getPostKey()).enqueue(new Callback<String>() {
+                                        @Override
+                                        public void onResponse(Call<String> call, retrofit2.Response<String> response) {
+                                            boolean isRecommend = false;
+                                            if (response.isSuccessful() && response.body() != null) {
+                                                // 로그인 한 사용자 != 글을 작성한 사용자
+                                                if (!selectedPost.getPostWriter().equals(loginID)) {
+                                                    // 추천을 눌렀다면
+                                                    if (response.body() == "Y") {
+                                                        isRecommend = true;
+                                                    }
+                                                    // 추천을 누르지 않았다면
+                                                    else if (response.body() == "N") {
+                                                        isRecommend = false;
+                                                    }
+                                                }
+                                            }
 
-            String registDate = DateUtil.parseDate(jsonOnePost.get("REG_DT").getAsString());
-            String updateDate = DateUtil.parseDate(jsonOnePost.get("UPD_DT").getAsString());
+                                            Intent intent = new Intent(view.getContext(), PostActivity.class);
+                                            intent.putExtra("choicePostKey", selectedPost.getPostKey());
+                                            intent.putExtra("choiceCategoryKey", selectedPost.getPostCategory());
+                                            intent.putExtra("postWriter", selectedPost.getPostWriter());
+                                            intent.putExtra("postRecommend", isRecommend);
+                                            startActivity(intent);
+                                        }
 
-            Post post = new Post(
-                    jsonOnePost.get("POST_KEY").getAsInt(),
-                    jsonOnePost.get("USER_ID").getAsString(),
-                    jsonOnePost.get("CATEGORY_KEY").getAsInt(),
-                    jsonOnePost.get("POST_TITLE").getAsString(),
-                    jsonOnePost.get("POST_CONTENTS").getAsString(),
-                    jsonOnePost.get("VIEW_CNT").getAsInt(),
-                    jsonOnePost.get("RECOMMENT_CNT").getAsInt(),
-                    postNotice,
-                    postCommentFlag,
-                    registDate,
-                    updateDate
-            );
+                                        @Override
+                                        public void onFailure(Call<String> call, Throwable t) {
+                                            Timber.d("ERROR(getPostRecommend) : " + t);
+                                        }
+                                    });
+                                }
 
-            if (lastPostKey < jsonOnePost.get("POST_KEY").getAsInt()) {
-                lastPostKey = jsonOnePost.get("POST_KEY").getAsInt();
-            }
 
-            postList.add(post);
-        }
-
-        Timber.d("마지막 게시물 키 : " + lastPostKey);
-
-        postAdapter = new BoardPostAdapter(view.getContext(), postList, categoryList);
-        postRecyclerView.setLayoutManager(new LinearLayoutManager(view.getContext()));
-        postRecyclerView.setAdapter(postAdapter);
-
-        postRecyclerView.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
-            @Override
-            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
-                return false;
-            }
-
-            @Override
-            public void onTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
-                Toast.makeText(view.getContext(), "터치", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
-
-            }
-        });
-
-        // 게시물 클릭했을 때의 이벤트 리스너
-        postAdapter.setOnPostClickListener(new PostClickListener() {
-            @Override
-            public void onClickPost(View view, int position) {
-                Timber.d("postPosition : " + position);
-
-                int choicePostKey = postList.get(position).getPostKey();
-                int choicePostCategoryKey = postList.get(position).getPostCategory();
-                String choicePostWriter = postList.get(position).getPostWriter();
-                Timber.d("선택한 게시물의 키 : " + choicePostKey);
-                Timber.d("선택한 게시물의 카테고리 : " + choicePostCategoryKey);
-                Timber.d("선택한 게시물의 작성자 : " + choicePostWriter);
-
-                // Recommend Setting
-                InsertPostRecommend insertPostRecommend = new InsertPostRecommend();
-                insertPostRecommend.execute(DatabaseInfo.insertPostRecommendURL, loginID, String.valueOf(choicePostKey));
-
-                // 게시물 작성자 != 로그인 사용자 => 조회수 업데이트/따봉 표시
-                if (loginID.equals(postList.get(position).getPostWriter()) == false) {
-                    UpdatePostViewCount updatePostViewCount = new UpdatePostViewCount();
-                    updatePostViewCount.execute(DatabaseInfo.updatePostViewCountURL, String.valueOf(choicePostKey));
-
-                    String URL = DatabaseInfo.showPostRecommendURL;
-
-                    StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
-                        @Override
-                        public void onResponse(String response) {
-                            Timber.d("추천 결과 : " + isPostRecommend(response, choicePostKey));
-                            // 추천 누른 경우
-                            boolean isRecommend = isPostRecommend(response, choicePostKey);
-                            if (isRecommend == true) {
+                                // 게시물 작성자 == 로그인 사용자
                                 Intent intent = new Intent(view.getContext(), PostActivity.class);
-                                intent.putExtra("choicePostKey", choicePostKey);
-                                intent.putExtra("choiceCategoryKey", choicePostCategoryKey);
-                                intent.putExtra("postWriter", choicePostWriter);
-                                intent.putExtra("postRecommend", isRecommend);
+                                intent.putExtra("choicePostKey", selectedPost.getPostKey());
+                                intent.putExtra("choicePostCategoryKey", selectedPost.getPostCategory());
+                                intent.putExtra("choicePostWriter", selectedPost.getPostWriter());
                                 startActivity(intent);
                             }
-                            // 추천을 누르지 않은 경우
-                            else {
-
-                            }
-                        }
-                    },
-                            new Response.ErrorListener() {
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-
-                                }
-                            });
-                            request.setShouldCache(false);
-                    requestQueue.add(request);
+                        });
+                    }
                 }
+            }
 
+            @Override
+            public void onFailure(Call<List<Post>> call, Throwable t) {
 
-                Intent intent = new Intent(view.getContext(), PostActivity.class);
-                intent.putExtra("choicePostKey", choicePostKey);
-                intent.putExtra("choicePostCategoryKey", choicePostCategoryKey);
-                intent.putExtra("choicePostWriter", choicePostWriter);
-                startActivity(intent);
             }
         });
-
     }
 
-    private boolean isPostRecommend(String response, int choicePostKey) {
-        JsonParser jsonParser = new JsonParser();
-        JsonObject jsonObject = (JsonObject)jsonParser.parse(response);
-        JsonArray jsonRecommend = (JsonArray)jsonObject.get("postRecommend");
 
-        boolean recommendCheck = false;
-
-        Timber.d("jsonRecommend 사이즈 : " + jsonRecommend.size());
-        for (int index=0; index<jsonRecommend.size(); index++) {
-            JsonObject recommend = (JsonObject) jsonRecommend.get(index);
-
-            // 같은 게시물이고
-            if (choicePostKey == recommend.get("POST_KEY").getAsInt()) {
-                // 아이디가 다르면
-                if (loginID.equals(recommend.get("USER_ID").getAsString())) {
-                    // 추천버튼 누르지 않은 경우
-                    if (recommend.get("RECOMMEND_FLAG").getAsString().equals("Y")) {
-                        Timber.d("추천 버튼 : Y");
-                        recommendCheck = true;
-                    }
-                    // 추천버튼 누른 경우
-                    else {
-                        Timber.d("추천 버튼 : N");
-                        recommendCheck = false;
-                    }
-                }
-            }
+    @Override
+    public void onClick(View view) {
+        switch(view.getId()) {
+            case R.id.board_category_btn1:
+                Toast.makeText(view.getContext(), "전체 카테고리", Toast.LENGTH_SHORT).show();
+                categoryKey = 0;
+                break;
+            case R.id.board_category_btn2:
+                Toast.makeText(view.getContext(), "세탁 카테고리", Toast.LENGTH_SHORT).show();
+                categoryKey = 1;
+                break;
+            case R.id.board_category_btn3:
+                Toast.makeText(view.getContext(), "수선 카테고리", Toast.LENGTH_SHORT).show();
+                categoryKey = 2;
+                break;
+            case R.id.board_category_btn4:
+                Toast.makeText(view.getContext(), "꿀팁 카테고리", Toast.LENGTH_SHORT).show();
+                categoryKey = 3;
+                break;
+            case R.id.board_category_btn5:
+                Toast.makeText(view.getContext(), "추천 카테고리", Toast.LENGTH_SHORT).show();
+                categoryKey = 4;
+                break;
         }
-        return recommendCheck;
+
     }
 }

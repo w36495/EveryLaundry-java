@@ -1,16 +1,19 @@
 package com.w36495.everylaundry;
 
 import android.Manifest;
-import android.animation.TimeAnimator;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Base64;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,32 +22,24 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
-import com.android.volley.AuthFailureError;
 import com.android.volley.BuildConfig;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.w36495.everylaundry.api.InsertLaundryLike;
-import com.w36495.everylaundry.data.DatabaseInfo;
-import com.w36495.everylaundry.data.Laundry;
+import com.w36495.everylaundry.api.LaundryAPI;
+import com.w36495.everylaundry.domain.Laundry;
 
 import net.daum.mf.map.api.MapPOIItem;
 import net.daum.mf.map.api.MapPoint;
 import net.daum.mf.map.api.MapView;
 
+import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Retrofit;
 import timber.log.Timber;
 
 /**
@@ -55,26 +50,24 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
     private MapView mapView;
     private ViewGroup mapViewContainer;
     private FloatingActionButton fab_zoomIn, fab_zoomOut, fab_gps;
-    private ImageButton map_view_back_btn;
+    private ImageButton map_view_back_btn, map_view_menu_btn;
     private TextView map_view_app_name;
+    private MapMenuClickListener menuClickListener;
 
-    private RequestQueue requestQueue;
-
-    private ArrayList<Laundry> laundryList = new ArrayList<>();
-    private int mapZoomLevel = 0;
+    private ArrayList<Laundry> laundryList;
     private String loginID = null;
 
     private Double networkLatitude = 0.0;
     private Double networkLongitude = 0.0;
+    private int showLaundryListType = 0;    // 세탁소 구분(0:전체, 1:코인, 2:일반)
+
+    private Retrofit retrofit = RetrofitBuilder.getClient();
+    private LaundryAPI laundryAPI = retrofit.create(LaundryAPI.class);
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_laundry_map);
-
-        if (requestQueue == null) {
-            requestQueue = Volley.newRequestQueue(getApplicationContext());
-        }
 
         if (BuildConfig.DEBUG) {
             Timber.plant(new Timber.DebugTree());
@@ -83,7 +76,9 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
         setInit();
     }
 
+
     private void setInit() {
+        Timber.d("setInit() 호출");
 
         loginID = MainActivity.getLoginUserID();
 
@@ -91,6 +86,7 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
 
         map_view_app_name = findViewById(R.id.map_view_app_name);
         map_view_back_btn = findViewById(R.id.map_view_back_btn);
+        map_view_menu_btn = findViewById(R.id.map_view_menu_btn);
         fab_zoomIn = findViewById(R.id.fab_zoomIn);
         fab_zoomOut = findViewById(R.id.fab_zoomOut);
         fab_gps = findViewById(R.id.fab_gps);
@@ -104,7 +100,7 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
         mapView.setMapCenterPoint(MapPoint.mapPointWithGeoCoord(networkLatitude, networkLongitude), true);
 
         // 줌 레벨 설정
-        mapView.setZoomLevel(4, true);
+        mapView.setZoomLevel(1, true);
 
         // 줌 인
         mapView.zoomIn(true);
@@ -119,25 +115,64 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
         map_view_app_name.setOnClickListener(this);
         map_view_back_btn.setOnClickListener(this);
 
-        String URL = DatabaseInfo.showLaundryURL;
+        // 세탁소
+        getLaundryInfo();
 
-        StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
+        // 오른쪽 상단 메뉴를 통해 코인세탁소/일반세탁소 구분
+        menuClickListener = new MapMenuClickListener() {
             @Override
-            public void onResponse(String response) {
-                Timber.d("onResponse() 응답 : " + response);
-                parseResponse(response);
-
+            public void onClickedMenu(int laundryType) {
+                // 전체
+                if (laundryType == 0) {
+                    Toast.makeText(LaundryMapActivity.this, "전체", Toast.LENGTH_SHORT).show();
+                    showLaundryListType = 0;
+                }
+                // 코인세탁소
+                else if (laundryType == 1) {
+                    Toast.makeText(LaundryMapActivity.this, "코인세탁소", Toast.LENGTH_SHORT).show();
+                    showLaundryListType = 1;
+                }
+                // 일반세탁소
+                else {
+                    Toast.makeText(LaundryMapActivity.this, "일반세탁소", Toast.LENGTH_SHORT).show();
+                    showLaundryListType = 2;
+                }
             }
-        },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        // 에러나면 error로 들어옴
-                        Timber.d("onErrorResponse() 세탁소 오류 오류 : " + error.getMessage());
-                    }
-                });
-        request.setShouldCache(false);
-        requestQueue.add(request);
+        };
+
+        map_view_menu_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                LaundryMenuDialog menuDialog = new LaundryMenuDialog(LaundryMapActivity.this, menuClickListener);
+                // 타이틀 제거
+                menuDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+                menuDialog.show();
+            }
+        });
+
+
+    }
+
+    /**
+     * 세탁소 정보
+     */
+    private void getLaundryInfo() {
+        laundryAPI.getLaundryInfo().enqueue(new Callback<List<Laundry>>() {
+            @Override
+            public void onResponse(Call<List<Laundry>> call, retrofit2.Response<List<Laundry>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    laundryList = (ArrayList<Laundry>) response.body();
+
+                    setMapViewMarker(laundryList);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Laundry>> call, Throwable t) {
+                Timber.d("ERROR(getLaundryInfo) : " + t);
+            }
+        });
+
     }
 
     /**
@@ -154,38 +189,11 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
         }
     }
 
-    private void parseResponse(String response) {
-        ArrayList<Laundry> resultLaundry = new ArrayList<>();
-
-        JsonParser jsonParser = new JsonParser();
-        JsonObject jsonObject = (JsonObject) jsonParser.parse(response);
-        JsonArray jsonLaundry = (JsonArray) jsonObject.get("laundry");
-
-        for (int index = 0; index < jsonLaundry.size(); index++) {
-            JsonObject laundryInfo = (JsonObject) jsonLaundry.get(index);
-
-            int LAUNDRY_KEY = laundryInfo.get("LAUNDRY_KEY").getAsInt();
-            String LAUNDRY_NM = laundryInfo.get("LAUNDRY_NM").getAsString();
-            String LAUNDRY_TEL = laundryInfo.get("LAUNDRY_TEL").getAsString();
-            String LAUNDRY_ADDR = laundryInfo.get("LAUNDRY_ADDR").getAsString();
-            String LAUNDRY_ZIP_CODE = laundryInfo.get("LAUNDRY_ZIP_CODE").getAsString();
-            Double COORDS_X = laundryInfo.get("COORDS_X").getAsDouble();
-            Double COORDS_Y = laundryInfo.get("COORDS_Y").getAsDouble();
-
-            Laundry laundry = new Laundry(LAUNDRY_KEY, LAUNDRY_NM, LAUNDRY_TEL, LAUNDRY_ADDR, LAUNDRY_ZIP_CODE, COORDS_X, COORDS_Y);
-
-            resultLaundry.add(laundry);
-        }
-
-        setMapViewMarker(resultLaundry);
-    }
-
     /**
      * DB에 저장되어 있는 세탁소 정보들 마커로 표시
      * @param DB_laundryList
      */
     private void setMapViewMarker(ArrayList<Laundry> DB_laundryList) {
-        this.laundryList = DB_laundryList;
 
         // 마커
         for (int index = 0; index < DB_laundryList.size(); index++) {
@@ -194,7 +202,15 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
             marker.setItemName(String.valueOf(DB_laundryList.get(index).getLaundryName()));
             marker.setTag(index);
             marker.setMapPoint(mapPoint);
-            marker.setMarkerType(MapPOIItem.MarkerType.BluePin);
+
+            // 코인세탁소 -> 노란색 마커
+            if (Integer.valueOf(DB_laundryList.get(index).getLaundryType()) == 0) {
+                marker.setMarkerType(MapPOIItem.MarkerType.YellowPin);
+            }
+            // 일반세탁소 -> 파란색 마커
+            else if (Integer.valueOf(DB_laundryList.get(index).getLaundryType()) == 1){
+                marker.setMarkerType(MapPOIItem.MarkerType.BluePin);
+            }
 
             mapView.addPOIItem(marker);
         }
@@ -210,55 +226,45 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
      */
     @Override
     public void onPOIItemSelected(MapView mapView, MapPOIItem mapPOIItem) {
-        int mapKey = mapPOIItem.getTag();
-        Laundry laundry = laundryList.get(mapKey);
-
-        String laundryKey = String.valueOf(mapKey);
+        int laundryKey = mapPOIItem.getTag();
+        Laundry laundry = laundryList.get(laundryKey);
 
         // DB의 LAUNDRY_DEATIL에 삽입하기
-        InsertLaundryLike insertLaundryLike = new InsertLaundryLike();
-        insertLaundryLike.execute(DatabaseInfo.insertLaundryLikeURL, loginID, laundryKey);
+        laundryAPI.insertLaundryLike(loginID, laundryKey).enqueue(new Callback<String>() {
+            @Override
+            public void onResponse(Call<String> call, retrofit2.Response<String> response) {
+                if (response.isSuccessful() && response.body() != null) {
+
+                }
+            }
+
+            @Override
+            public void onFailure(Call<String> call, Throwable t) {
+                Timber.d("ERROR(insertLaundryLike) : " + t);
+            }
+        });
 
         // 좋아요(즐겨찾기)를 했는지 안했는지 얻기
-        String URL = DatabaseInfo.showLaundryLikeURL;
-        StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
+        laundryAPI.getLaundryLike(loginID, laundryKey).enqueue(new Callback<String>() {
             @Override
-            public void onResponse(String response) {
-                Timber.d("좋아요 뭐를 했니? : " + response);
-                JsonParser jsonParser = new JsonParser();
-                JsonObject jsonObject = (JsonObject) jsonParser.parse(response);
-                JsonArray jsonLike = (JsonArray) jsonObject.get("laundryLikeArray");
-                JsonObject like = (JsonObject) jsonLike.get(0);
+            public void onResponse(Call<String> call, retrofit2.Response<String> response) {
                 boolean likeFlag = false;
-
-                if (like.get("LIKE_FLAG").getAsString().equals("Y")) {
-                    likeFlag = true;
-                }
-
-                // 하단에 세탁소 정보 다이얼로그 띄우기
-                LaundryInfoDialog dialog = new LaundryInfoDialog(LaundryMapActivity.this, laundry, likeFlag);
-                dialog.show();
-
-            }
-        },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Timber.d(error.getMessage());
+                if (response.isSuccessful() && response.body() != null) {
+                    if (response.body().equals("Y")) {
+                        likeFlag = true;
                     }
-                }) {
-            @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String, String> params = new HashMap<>();
-                params.put("userID", loginID);
-                params.put("laundryKey", laundryKey);
-                return params;
+
+                    // 하단에 세탁소 정보 다이얼로그 띄우기
+                    LaundryInfoDialog dialog = new LaundryInfoDialog(LaundryMapActivity.this, laundry, likeFlag);
+                    dialog.show();
+                }
             }
-        };
 
-        request.setShouldCache(false);
-        requestQueue.add(request);
-
+            @Override
+            public void onFailure(Call<String> call, Throwable t) {
+                Timber.d("ERROR(getLaundryLike) : " + t);
+            }
+        });
     }
 
     @Override
@@ -280,52 +286,29 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
      * GPS
      */
     private void getGps() {
-
-        boolean isGPSEnabled = false;
         boolean isNetworkEnabled = false;
-
         LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-
-        // GPS 프로바이더 사용가능여부
-        isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         // 네트워크 프로바이더 사용가능여부
         isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-
-        Timber.d("GPS 프로바이더 사용가능 ? : " + isGPSEnabled);
-        Timber.d("네트워크 프로바이더 사용가능? : " + isNetworkEnabled);
-
-        //TODO: GPS 안켜져있으면 위치 서비스로 이동 => 나중에 팝업창으로 안내문구 띄우기
-        if (isGPSEnabled == false) {
+        // 네트워크 사용여부 체크 -> 사용거부 해놓았으면 휴대폰의 설정 앱 열기
+        if (isNetworkEnabled == false) {
             Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
             startActivity(intent);
         }
-
         // 퍼미션 체크
         if (ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(getApplicationContext(), "네트워크 사용이 거부되었습니다.", Toast.LENGTH_SHORT).show();
             return;
         }
-//        Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-//
         Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-
         if (location != null) {
             // latitude : 위도, longitude : 경도
             networkLatitude = location.getLatitude();
             networkLongitude = location.getLongitude();
-            Timber.d("위도 : " + networkLatitude + " 경도 : " + networkLongitude);
-        } else {
-            Timber.d("location 없음");
         }
-
     }
 
     @Override
@@ -349,4 +332,24 @@ public class LaundryMapActivity extends AppCompatActivity implements MapView.POI
                 break;
         }
     }
+
+
+    /**
+     * HASH KEY 사용
+     */
+    private void getAppKeyHash() {
+        try {
+            PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_SIGNATURES);
+            for (Signature signature : info.signatures) {
+                MessageDigest md;
+                md = MessageDigest.getInstance("SHA");
+                md.update(signature.toByteArray());
+                String something = new String(Base64.encode(md.digest(), 0));
+                Timber.d("Hash key : " + something);
+            }
+        } catch (Exception e) {
+            Timber.d("로그 name not found" + e.toString());
+        }
+    }
+
 }

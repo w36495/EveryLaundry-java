@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/top_coin"
+        android:title="코인세탁소" />
+
+    <item
+        android:id="@+id/top_normal"
+        android:title="일반세탁소" />
+
+</menu>

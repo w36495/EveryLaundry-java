@@ -10,24 +10,13 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.w36495.everylaundry.api.UpdateUser;
-import com.w36495.everylaundry.data.DatabaseInfo;
-import com.w36495.everylaundry.data.User;
+import com.w36495.everylaundry.domain.User;
+import com.w36495.everylaundry.api.UserAPI;
 
-import java.io.DataInput;
-import java.util.HashMap;
-import java.util.Map;
-
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 import timber.log.Timber;
 
 public class SettingUpdateActivity extends AppCompatActivity {
@@ -37,16 +26,10 @@ public class SettingUpdateActivity extends AppCompatActivity {
 
     private String loginID = null;
 
-    private RequestQueue requestQueue;
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setting_update);
-
-        if(requestQueue == null) {
-            requestQueue = Volley.newRequestQueue(getApplicationContext());
-        }
 
         if (BuildConfig.DEBUG) {
             Timber.plant(new Timber.DebugTree());
@@ -66,11 +49,13 @@ public class SettingUpdateActivity extends AppCompatActivity {
         setting_user_nickNM = findViewById(R.id.setting_user_nickNM);
         setting_user_save_btn = findViewById(R.id.setting_user_save_btn);
 
-        setting_user_id.setText(loginID);
         setting_user_id.setEnabled(false);
 
+        Retrofit retrofit = RetrofitBuilder.getClient();
+        UserAPI userAPI = retrofit.create(UserAPI.class);
+
         // 사용자 정보 가져오기
-        setUserInfo();
+        setUserInfo(userAPI);
 
         setting_user_save_btn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -80,55 +65,51 @@ public class SettingUpdateActivity extends AppCompatActivity {
                 String userEmail = setting_user_email.getText().toString();
                 String userNickNM = setting_user_nickNM.getText().toString();
 
-                UpdateUser updateUser = new UpdateUser();
-                updateUser.execute(DatabaseInfo.updateUserURL, loginID, userPW, userMobile, userNickNM, userEmail);
-                Toast.makeText(getApplicationContext(), "정보가 수정되었습니다.", Toast.LENGTH_SHORT).show();
+                userAPI.updateUser(loginID, userPW, userMobile, userNickNM, userEmail).enqueue(new Callback<String>() {
+                    @Override
+                    public void onResponse(Call<String> call, Response<String> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            Toast.makeText(getApplicationContext(), "정보가 수정되었습니다.", Toast.LENGTH_SHORT).show();
 
-                Intent intent = new Intent(SettingUpdateActivity.this, MainActivity.class);
-                intent.putExtra("SettingUpdateActivity", "SettingUpdateActivity");
-                startActivity(intent);
+                            Intent intent = new Intent(SettingUpdateActivity.this, MainActivity.class);
+                            intent.putExtra("SettingUpdateActivity", "SettingUpdateActivity");
+                            startActivity(intent);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<String> call, Throwable t) {
+                        Timber.d("ERROR(updateUser) : " + t);
+                    }
+                });
+
             }
         });
     }
 
-    private void setUserInfo() {
+    /**
+     * 회원 정보 가져오기
+     */
+    private void setUserInfo(UserAPI userAPI) {
 
-        String URL = DatabaseInfo.selectUserURL;
-
-        StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
+        userAPI.selectUser(loginID).enqueue(new Callback<User>() {
             @Override
-            public void onResponse(String response) {
-                parseUserInfo(response);
-            }
-        },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
+            public void onResponse(Call<User> call, retrofit2.Response<User> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    User user = response.body();
 
-                    }
-                }) {
+                    setting_user_id.setText(user.getUserId());
+                    setting_user_nickNM.setText(user.getUserNickname());
+                    setting_user_mobile.setText(user.getUserMobile());
+                    setting_user_email.setText(user.getUserEmail());
+                    setting_user_pw.setText(user.getUserPassword());
+                }
+            }
+
             @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String, String> params = new HashMap<>();
-                params.put("userID", loginID);
-                return params;
+            public void onFailure(Call<User> call, Throwable t) {
+                Timber.d("ERROR(selectUser) : " + t);
             }
-        };
-
-        request.setShouldCache(false);
-        requestQueue.add(request);
-
-    }
-
-    private void parseUserInfo(String response) {
-        JsonParser jsonParser = new JsonParser();
-        JsonObject jsonObject = (JsonObject) jsonParser.parse(response);
-        JsonArray jsonUser = (JsonArray) jsonObject.get("user");
-        JsonObject user = (JsonObject) jsonUser.get(0);
-
-        setting_user_nickNM.setText(user.get("USER_NICKNM").getAsString());
-        setting_user_mobile.setText(user.get("USER_MOBILE").getAsString());
-        setting_user_email.setText(user.get("USER_EMAIL").getAsString());
-        setting_user_pw.setText(user.get("USER_PASSWD").getAsString());
+        });
     }
 }

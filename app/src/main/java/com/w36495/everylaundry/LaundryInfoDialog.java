@@ -1,7 +1,6 @@
 package com.w36495.everylaundry;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageButton;
@@ -11,25 +10,19 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.w36495.everylaundry.adapter.ReviewAdapter;
-import com.w36495.everylaundry.api.UpdateLaundryDetail;
-import com.w36495.everylaundry.data.DatabaseInfo;
-import com.w36495.everylaundry.data.Laundry;
-import com.w36495.everylaundry.data.Review;
-import com.w36495.everylaundry.util.DateUtil;
+import com.w36495.everylaundry.api.LaundryAPI;
+import com.w36495.everylaundry.domain.Laundry;
+import com.w36495.everylaundry.domain.Review;
 
 import java.util.ArrayList;
+import java.util.List;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 import timber.log.Timber;
 
 public class LaundryInfoDialog extends BottomSheetDialog {
@@ -40,11 +33,10 @@ public class LaundryInfoDialog extends BottomSheetDialog {
     private RecyclerView reviewReycyclerView;
     private ReviewAdapter reviewAdapter;
 
-    private TextView map_title, map_address, map_tel;
+    private TextView map_title, map_address, map_tel, map_laundry_type;
     private ImageButton map_like_btn;
 
     private ArrayList<Review> resultReviewList;
-    private RequestQueue requestQueue;
 
     private String loginID = null;
     private boolean likeFlag = false;
@@ -60,10 +52,6 @@ public class LaundryInfoDialog extends BottomSheetDialog {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.dialog_laundry_map_info);
-
-        if(requestQueue == null) {
-            requestQueue = Volley.newRequestQueue(context.getApplicationContext());
-        }
 
         if (BuildConfig.DEBUG) {
             Timber.plant(new Timber.DebugTree());
@@ -81,6 +69,7 @@ public class LaundryInfoDialog extends BottomSheetDialog {
         map_address = findViewById(R.id.map_address);
         map_tel = findViewById(R.id.map_tel);
         map_like_btn = findViewById(R.id.map_like_btn);
+        map_laundry_type = findViewById(R.id.map_laundry_type);
 
         // 하트(즐겨찾기) 표시
         if (likeFlag == true) {
@@ -91,37 +80,39 @@ public class LaundryInfoDialog extends BottomSheetDialog {
 
         reviewReycyclerView = findViewById(R.id.review_recyclerView);
 
-        Timber.d("title : " + laundry.getLaundryName());
-        Timber.d("address : " + laundry.getLaundryAddress());
-        Timber.d("tel : " + laundry.getLaundryTel());
-
         map_title.setText(laundry.getLaundryName());
         map_address.setText(laundry.getLaundryAddress());
         map_tel.setText(laundry.getLaundryTel());
 
+        if (Integer.valueOf(laundry.getLaundryType()) == 0) {
+            map_laundry_type.setText("코인");
+        } else {
+            map_laundry_type.setText("일반");
+        }
+
         loginID = MainActivity.getLoginUserID();
 
+        Retrofit retrofit = RetrofitBuilder.getClient();
+        LaundryAPI laundryAPI = retrofit.create(LaundryAPI.class);
 
-        // DB에서 리뷰 불러오기
-        String URL = DatabaseInfo.showLaundryReviewURL;
-
-        StringRequest request = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
+        laundryAPI.getLaundryReview(laundry.getLaundryKey()).enqueue(new Callback<List<Review>>() {
             @Override
-            public void onResponse(String response) {
-                Timber.d("onResponse() 응답 : " + response);
-                parseResponse(response);
-            }
-        },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        // 에러나면 error로 들어옴
-                        Timber.d("onErrorResponse() 로그인 오류 : " + error.getMessage());
-                    }
-                });
-        request.setShouldCache(false);
-        requestQueue.add(request);
+            public void onResponse(Call<List<Review>> call, retrofit2.Response<List<Review>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    resultReviewList = (ArrayList<Review>) response.body();
+                }
 
+                reviewAdapter = new ReviewAdapter(context, resultReviewList);
+                reviewReycyclerView.setLayoutManager(new LinearLayoutManager(context));
+                reviewReycyclerView.setAdapter(reviewAdapter);
+            }
+
+            @Override
+            public void onFailure(Call<List<Review>> call, Throwable t) {
+                Timber.d("ERROR(getLaundryReview) : " + t);
+            }
+        });
+        // DB에서 리뷰 불러오기
         map_like_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -137,46 +128,22 @@ public class LaundryInfoDialog extends BottomSheetDialog {
                     map_like_btn.setImageResource(R.drawable.ic_baseline_favorite_24);
                 }
 
-                UpdateLaundryDetail updateLaundryDetail = new UpdateLaundryDetail();
-                updateLaundryDetail.execute(DatabaseInfo.updateLaundryLikeURL, loginID, String.valueOf(laundry.getLaundryKey()));
+
+                laundryAPI.updateLaundryLike(loginID, laundry.getLaundryKey()).enqueue(new Callback<String>() {
+                    @Override
+                    public void onResponse(Call<String> call, Response<String> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<String> call, Throwable t) {
+                        Timber.d("ERROR(updateLaundryLike) : " + t);
+                    }
+                });
             }
         });
 
     }
-
-    private void parseResponse(String response) {
-        resultReviewList = new ArrayList<>();
-
-        JsonParser jsonParser = new JsonParser();
-        JsonObject jsonObject = (JsonObject)jsonParser.parse(response);
-        JsonArray jsonReview = (JsonArray) jsonObject.get("reviews");
-        Timber.d("jsonReview의 size() : " + jsonReview.size());
-
-        JsonObject laundryReview = new JsonObject();
-
-        for (int index=0; index<jsonReview.size(); index++) {
-            laundryReview = (JsonObject) jsonReview.get(index);
-
-            int reviewKey = laundryReview.get("RV_KEY").getAsInt();
-            String reviewUserID = laundryReview.get("USER_ID").getAsString();
-            int reviewLaundryKey = laundryReview.get("LAUNDRY_KEY").getAsInt();
-            String reviewContents = laundryReview.get("RV_CONTENTS").getAsString();
-            String reviewRegistDate = DateUtil.parseDate(laundryReview.get("REG_DT").getAsString());
-
-            if (reviewLaundryKey == laundry.getLaundryKey()) {
-                Review review = new Review(reviewKey, reviewUserID, reviewLaundryKey, reviewContents, reviewRegistDate);
-
-                resultReviewList.add(review);
-            }
-
-
-        }
-
-        reviewAdapter = new ReviewAdapter(context, resultReviewList);
-        reviewReycyclerView.setLayoutManager(new LinearLayoutManager(context));
-        reviewReycyclerView.setAdapter(reviewAdapter);
-    }
-
-
 
 }

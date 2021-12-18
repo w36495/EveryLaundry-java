@@ -13,13 +13,17 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.w36495.everylaundry.api.InsertPost;
-import com.w36495.everylaundry.api.UpdatePost;
-import com.w36495.everylaundry.data.DatabaseInfo;
-import com.w36495.everylaundry.fragment.BoardFragment;
+import com.w36495.everylaundry.api.CategoryAPI;
+import com.w36495.everylaundry.api.PostAPI;
+import com.w36495.everylaundry.domain.Category;
 
 import java.util.ArrayList;
+import java.util.List;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 import timber.log.Timber;
 
 /**
@@ -35,8 +39,10 @@ public class PostAddActivity extends AppCompatActivity {
     private int categoryKey = -1;
     private boolean postFlag = true;    // true : 추가, false : 수정
 
+    private ArrayList<String> categoryList = new ArrayList<>();
+    private ArrayAdapter<String> categoryAdapter;
 
-    private String[] categoryList;
+    private Retrofit retrofit;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -54,6 +60,8 @@ public class PostAddActivity extends AppCompatActivity {
     }
 
     private void setInit() {
+
+        retrofit = RetrofitBuilder.getClient();
 
         post_add_back_btn = findViewById(R.id.post_add_back_btn);
         post_add_save_btn = findViewById(R.id.post_add_save_btn);
@@ -74,31 +82,15 @@ public class PostAddActivity extends AppCompatActivity {
             post_add_contents.setText(intent.getStringExtra("updatePostContents"));
         }
 
-        ArrayList<String> category = BoardFragment.categoryList;
-        categoryList = category.toArray(new String[category.size()]);
-
-        categoryList[0] = "카테고리를 선택해주세요.";
-
-        Timber.d("선택된 카테고리 키 : " + categoryKey);
-
-        Timber.d("PostFlag : " + postFlag);
-
-
-        // 스피너(콤보박스) 어댑터
-        ArrayAdapter<String> categoryAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, categoryList);
-        post_add_spinner.setAdapter(categoryAdapter);
-        if (categoryKey != -1) {
-            post_add_spinner.setSelection(categoryKey);
-        }
+        // 카테고리 셋팅
+        setCategoryList();
 
         // 스피너(콤보박스) 카테고리 클릭했을 때
         post_add_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
-
                 switch (position) {
-                    case 0:     // 카테고리를 선택해주세요.
+                    case 0:     // 전체
                         categoryKey = 0;
                         break;
                     case 1:     // #수선
@@ -114,8 +106,6 @@ public class PostAddActivity extends AppCompatActivity {
                         categoryKey = 4;
                         break;
                 }
-
-                Timber.d("선택된 카테고리 : " + categoryList[position] + " position : " + position);
             }
 
             @Override
@@ -136,34 +126,82 @@ public class PostAddActivity extends AppCompatActivity {
         post_add_save_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                PostAPI postAPI = retrofit.create(PostAPI.class);
                 String loginID = MainActivity.getLoginUserID();
                 Timber.d("userID : " + loginID);
                 String postTitle = post_add_title.getText().toString();
                 String postContents = post_add_contents.getText().toString();
 
-                if (categoryKey == 0) {
-                    Toast.makeText(getApplicationContext(), "카테고리를 선택해주세요.", Toast.LENGTH_SHORT).show();
+                if (postFlag) {
+                    // DB에 저장
+                    postAPI.insertPost(String.valueOf(postKey), loginID, String.valueOf(categoryKey), postTitle, postContents).enqueue(new Callback<String>() {
+                        @Override
+                        public void onResponse(Call<String> call, Response<String> response) {
+                            if (response.isSuccessful() && response.body() != null) {
+                                Toast.makeText(PostAddActivity.this, "게시물이 작성되었습니다.", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Timber.d(response.body());
+                            }
+                        }
 
+                        @Override
+                        public void onFailure(Call<String> call, Throwable t) {
+                            Timber.d("ERROR(insertPost) : " + t);
+                        }
+                    });
                 } else {
+                    postAPI.updatePost(String.valueOf(postKey), String.valueOf(categoryKey), postTitle, postContents).enqueue(new Callback<String>() {
+                        @Override
+                        public void onResponse(Call<String> call, Response<String> response) {
+                            if (response.isSuccessful() && response.body() != null) {
+                                Toast.makeText(PostAddActivity.this, "게시물이 수정되었습니다.", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Timber.d(response.body());
+                            }
+                        }
 
-                    if (postFlag) {
-                        // DB에 저장
-                        InsertPost insertPost = new InsertPost();
-                        insertPost.execute(DatabaseInfo.setPostURL, String.valueOf(++postKey), loginID, String.valueOf(categoryKey), postTitle, postContents);
-                        Timber.d("1 added Success!");
-                    } else {
-                        UpdatePost updatePost = new UpdatePost();
-                        updatePost.execute(DatabaseInfo.updatePostURL, String.valueOf(postKey), String.valueOf(categoryKey), postTitle, postContents);
-                        Timber.d("1 updated Success!");
+                        @Override
+                        public void onFailure(Call<String> call, Throwable t) {
+                            Timber.d("ERROR(updatePost) : " + t);
+                        }
+                    });
+                }
+                Intent  intent = new Intent(getApplicationContext(), MainActivity.class);
+                intent.putExtra("PostAddActivity", "PostActivity");
+                startActivity(intent);
+            }
+        });
+
+    }
+
+    /**
+     * 카테고리 셋팅
+     */
+    private void setCategoryList() {
+
+        CategoryAPI categoryAPI = retrofit.create(CategoryAPI.class);
+
+        categoryAPI.getCategoryAll().enqueue(new Callback<List<Category>>() {
+            @Override
+            public void onResponse(Call<List<Category>> call, Response<List<Category>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    for (int index = 0; index < response.body().size(); index++) {
+                        categoryList.add(response.body().get(index).getCategoryTitle());
                     }
 
 
-                    Intent  intent = new Intent(getApplicationContext(), MainActivity.class);
-                    intent.putExtra("PostAddActivity", "PostActivity");
-                    startActivity(intent);
+                    // 스피너(콤보박스) 어댑터
+                    categoryAdapter = new ArrayAdapter<>(PostAddActivity.this, android.R.layout.simple_spinner_item, categoryList);
+                    post_add_spinner.setAdapter(categoryAdapter);
+                    if (categoryKey != -1) {
+                        post_add_spinner.setSelection(categoryKey);
+                    }
                 }
+            }
 
-
+            @Override
+            public void onFailure(Call<List<Category>> call, Throwable t) {
+                Timber.d("ERROR(getCategoryAll) : " + t);
             }
         });
 

@@ -1,22 +1,37 @@
-package com.w36495.everylaundry.data;
+package com.w36495.everylaundry.domain;
+
+import com.google.gson.annotations.SerializedName;
 
 /**
  * 댓글 데이터 클래스
  */
 public class Comment {
 
+    @SerializedName("CM_KEY")
     private int commentKey;
-    private String userID;
-    private int postKey;
-    private String commentContents;
-    private String CommentRegistDate;
 
-    public Comment(int commentKey, String userID, int postKey, String commentContents, String commentRegistDate) {
+    @SerializedName("USER_ID")
+    private String userID;
+
+    @SerializedName("POST_KEY")
+    private int postKey;
+
+    @SerializedName("CM_CONTENTS")
+    private String commentContents;
+
+    @SerializedName("REG_DT")
+    private String commentRegistDate;
+
+    @SerializedName("UPD_DT")
+    private String commentUpdateDate;
+
+    public Comment(int commentKey, String userID, int postKey, String commentContents, String commentRegistDate, String commentUpdateDate) {
         this.commentKey = commentKey;
         this.userID = userID;
         this.postKey = postKey;
         this.commentContents = commentContents;
-        this.CommentRegistDate = commentRegistDate;
+        this.commentRegistDate = commentRegistDate;
+        this.commentUpdateDate = commentUpdateDate;
     }
 
     public int getCommentKey() {
@@ -52,11 +67,19 @@ public class Comment {
     }
 
     public String getCommentRegistDate() {
-        return CommentRegistDate;
+        return commentRegistDate;
     }
 
     public void setCommentRegistDate(String commentRegistDate) {
-        this.CommentRegistDate = commentRegistDate;
+        this.commentRegistDate = commentRegistDate;
+    }
+
+    public String getCommentUpdateDate() {
+        return commentUpdateDate;
+    }
+
+    public void setCommentUpdateDate(String commentUpdateDate) {
+        this.commentUpdateDate = commentUpdateDate;
     }
 
     @Override
@@ -66,7 +89,8 @@ public class Comment {
                 ", userID='" + userID + '\'' +
                 ", postKey=" + postKey +
                 ", commentContents='" + commentContents + '\'' +
-                ", CommentRegistDate='" + CommentRegistDate + '\'' +
+                ", commentRegistDate='" + commentRegistDate + '\'' +
+                ", commentUpdateDate='" + commentUpdateDate + '\'' +
                 '}';
     }
 }
