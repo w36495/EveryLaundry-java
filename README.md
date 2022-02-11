@@ -1,4 +1,4 @@
-# 🌊 EveryLaundry
+# 🌊 EveryLaundry (Java)
 
 세탁소의 정보와 정보 공유 커뮤니티를 제공하는 세탁 어플리케이션
 
@@ -21,3 +21,7 @@ www.github.com/w36495/EveryLaundry
   - 게시물 추천  
 - 회원 정보
   - 로그인/회원가입/회원정보수정
+  
+ERD
+---
+![EveryLaundry-ERD](https://user-images.githubusercontent.com/52291662/153555806-cc9a8f5d-dc75-4f8e-b32d-d448f40aac76.png)
