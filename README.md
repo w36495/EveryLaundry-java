@@ -24,4 +24,5 @@ www.github.com/w36495/EveryLaundry
   
 ERD
 ---
-![EveryLaundry-ERD](https://user-images.githubusercontent.com/52291662/153555806-cc9a8f5d-dc75-4f8e-b32d-d448f40aac76.png)
+![ERD](https://user-images.githubusercontent.com/52291662/153599926-b52b7c1f-1822-45ad-a42a-0097967a812c.png)
+
